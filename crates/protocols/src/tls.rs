@@ -95,10 +95,8 @@ pub fn parse_certificate(der: &[u8]) -> Option<CertInfo> {
         for gn in &ext.value.general_names {
             match gn {
                 x509_parser::extensions::GeneralName::DNSName(d) => san.push(d.to_string()),
-                x509_parser::extensions::GeneralName::IPAddress(b) => {
-                    if b.len() == 4 {
-                        san.push(format!("{}.{}.{}.{}", b[0], b[1], b[2], b[3]));
-                    }
+                x509_parser::extensions::GeneralName::IPAddress(b) if b.len() == 4 => {
+                    san.push(format!("{}.{}.{}.{}", b[0], b[1], b[2], b[3]));
                 }
                 _ => {}
             }
