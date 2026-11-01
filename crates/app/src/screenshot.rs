@@ -68,7 +68,7 @@ pub fn demo_hosts() -> Vec<scan_core::HostRecord> {
     pr.services.push(ServiceRecord::new(ServiceType::Http, Some(80), "HTTP, HP Color LaserJet 9500"));
     pr.services.push(ServiceRecord::new(ServiceType::JetDirect, Some(9100), "JetDirect"));
     let mut pat = mk("192.168.0.110", "PATRICK", "GIGA-BYTE TECHNOLOGY CO.,LTD.", "00:1F:D0:83:47:2E", DeviceClass::Desktop);
-    pat.comment = "Büro".into();
+    pat.comment = ui::i18n::t("demo.office").into();
     for (t, p, n) in [
         (ServiceType::Https, 443, "HTTPS, IIS Windows Server"),
         (ServiceType::Ftp, 21, "FTP, Microsoft FTP Service"),

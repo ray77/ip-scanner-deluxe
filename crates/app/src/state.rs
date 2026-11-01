@@ -25,6 +25,15 @@ pub fn class_label(h: &HostRecord) -> String {
     t(&format!("class.{}", h.device_class.key())).to_string()
 }
 
+/// Display text of a service node; the SMB shares node follows the UI language.
+fn service_label(s: &scan_core::ServiceRecord) -> String {
+    if s.service_type == ServiceType::Shares {
+        t("svc.shares").to_string()
+    } else {
+        s.display_name.clone()
+    }
+}
+
 pub fn vendor_label(h: &HostRecord) -> String {
     if h.randomized_mac {
         t("vendor.randomized").to_string()
@@ -180,7 +189,7 @@ impl Data {
             .services
             .iter()
             .filter(|s| s.service_type != ServiceType::MdnsService)
-            .map(|s| s.display_name.split(',').next().unwrap_or("").to_string())
+            .map(|s| service_label(s).split(',').next().unwrap_or("").to_string())
             .collect();
         set(&mut cells, Column::Services, svc_names.join(", "));
         set(
@@ -222,12 +231,7 @@ impl Data {
             services: h
                 .services
                 .iter()
-                .map(|s| ServiceRow {
-                    service_type: s.service_type.clone(),
-                    label: s.display_name.clone(),
-                    port: s.port,
-                    uri: s.uri.clone(),
-                })
+                .map(|s| ServiceRow { service_type: s.service_type.clone(), label: service_label(s), port: s.port, uri: s.uri.clone() })
                 .collect(),
             tooltip: tooltip.join("\n"),
         }

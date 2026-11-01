@@ -121,6 +121,8 @@ const STRINGS: &[(&str, &str, &str)] = &[
     // Context menu
     ("ctx.open", "Öffnen", "Open"),
     ("ctx.shares", "SMB/Freigaben", "SMB/Shares"),
+    ("svc.shares", "Freigaben", "Shares"),
+    ("demo.office", "Büro", "Office"),
     ("ctx.tools", "Werkzeuge", "Tools"),
     ("ctx.ping", "Ping", "Ping"),
     ("ctx.traceroute", "Traceroute", "Traceroute"),

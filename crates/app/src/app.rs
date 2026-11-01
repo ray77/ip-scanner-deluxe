@@ -129,7 +129,8 @@ pub struct App {
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>, rt: tokio::runtime::Runtime, paths: AppPaths, cli: crate::screenshot::CliOptions) -> Self {
         // 1. Settings (demo mode never touches the user's data)
-        let store = if cli.demo { Store::in_memory() } else { Store::open(&paths.store_file()) };
+        // Demo and screenshot runs never touch the user's real settings.
+        let store = if cli.demo || cli.screenshot.is_some() { Store::in_memory() } else { Store::open(&paths.store_file()) };
         let store = match store {
             Ok(s) => Some(s),
             Err(e) => {
@@ -143,7 +144,10 @@ impl App {
         }
         if cli.demo {
             settings.last_range = "192.168.0.90-110".into();
-            settings.language = if cli.lang_en { storage::Language::English } else { storage::Language::German };
+            settings.language = storage::Language::German;
+        }
+        if cli.lang_en {
+            settings.language = storage::Language::English;
         }
         ui::set_language(settings.language);
         // 2. Theme + fonts

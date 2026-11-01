@@ -84,8 +84,11 @@ fn main() -> eframe::Result<()> {
     };
 
     // Read window geometry before the window exists.
-    let geometry: AppSettings =
-        if cli.demo { AppSettings::default() } else { Store::open(&paths.store_file()).map(|s| s.load_settings()).unwrap_or_default() };
+    let geometry: AppSettings = if cli.demo || cli.screenshot.is_some() {
+        AppSettings::default()
+    } else {
+        Store::open(&paths.store_file()).map(|s| s.load_settings()).unwrap_or_default()
+    };
     let size = cli.size.or(geometry.window_size).unwrap_or([653.0, 473.0]);
     let mut viewport = egui::ViewportBuilder::default()
         .with_title("IP Scanner Deluxe")
