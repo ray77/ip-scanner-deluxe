@@ -82,7 +82,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force dist/IPScannerDeluxe | Out-Null
           Copy-Item target/release/IPScannerDeluxe.exe dist/IPScannerDeluxe/
-          Copy-Item README.md, LICENSE-MIT, LICENSE-APACHE dist/IPScannerDeluxe/
+          Copy-Item README.md, README.de.md, LICENSE-MIT, LICENSE-APACHE dist/IPScannerDeluxe/
           New-Item -ItemType File dist/IPScannerDeluxe/portable.flag | Out-Null
           Compress-Archive -Path dist/IPScannerDeluxe -DestinationPath dist/IPScannerDeluxe-windows-x86_64-portable.zip
           Copy-Item target/release/IPScannerDeluxe.exe dist/IPScannerDeluxe.exe
@@ -117,7 +117,7 @@ jobs:
           VERSION=$(cargo pkgid -p ip-scanner-deluxe | sed 's/.*[#@]//')
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           mkdir -p dist/IPScannerDeluxe
-          cp target/release/IPScannerDeluxe README.md LICENSE-MIT LICENSE-APACHE dist/IPScannerDeluxe/
+          cp target/release/IPScannerDeluxe README.md README.de.md LICENSE-MIT LICENSE-APACHE dist/IPScannerDeluxe/
           cp packaging/linux/ip-scanner-deluxe.desktop packaging/icons/ip-scanner-deluxe.png dist/IPScannerDeluxe/
           tar -C dist -czf dist/IPScannerDeluxe-linux-${{ matrix.arch }}.tar.gz IPScannerDeluxe
       - name: deb
