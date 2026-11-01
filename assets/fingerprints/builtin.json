@@ -1,0 +1,309 @@
+[
+  {
+    "id": "hp-printer",
+    "vendor_contains": ["hewlett", "hp inc"],
+    "optional_ports": [9100, 631, 515],
+    "mdns_services": ["_ipp._tcp", "_ipps._tcp", "_printer._tcp", "_pdl-datastream._tcp"],
+    "http_title_regex": "(?i)(laserjet|officejet|deskjet|designjet|pagewide|envy|smart tank|hp color)",
+    "model_regex": "(?i)^(hp|hewlett)",
+    "device_class": "Printer",
+    "model_hint": "HP Drucker"
+  },
+  {
+    "id": "printer-generic",
+    "vendor_contains": ["brother", "canon", "seiko epson", "kyocera", "lexmark", "xerox", "ricoh", "konica", "sharp", "oki data", "toshiba tec", "zebra"],
+    "optional_ports": [9100, 631, 515],
+    "mdns_services": ["_ipp._tcp", "_ipps._tcp", "_printer._tcp", "_pdl-datastream._tcp", "_scanner._tcp", "_uscan._tcp"],
+    "model_regex": "(?i)(printer|mfc|dcp|hl-|pixma|imagerunner|ecosys|taskalfa|workforce|ecotank|versalink|workcentre)",
+    "device_class": "Printer"
+  },
+  {
+    "id": "printer-jetdirect",
+    "required_ports": [9100],
+    "optional_ports": [631, 515],
+    "mdns_services": ["_ipp._tcp", "_printer._tcp", "_pdl-datastream._tcp"],
+    "device_class": "Printer",
+    "score": 10
+  },
+  {
+    "id": "hp-switch",
+    "vendor_contains": ["hewlett", "aruba", "hpe"],
+    "optional_ports": [22, 23, 80, 443],
+    "forbidden_ports": [9100, 631, 515, 3389],
+    "http_title_regex": "(?i)(procurve|aruba|switch|officeconnect|instant on|1820|1920|2530|2920)",
+    "http_server_regex": "(?i)(ehttp|procurve|aruba)",
+    "model_regex": "(?i)(procurve|aruba|switch)",
+    "device_class": "Switch",
+    "model_hint": "HP/Aruba Switch"
+  },
+  {
+    "id": "raspberry-pi",
+    "vendor_contains": ["raspberry pi"],
+    "hostname_regex": "(?i)(raspberrypi|octopi|pihole|pi-hole|^pi[0-9]*([.-]|$))",
+    "optional_ports": [22, 80],
+    "mdns_services": ["_ssh._tcp", "_sftp-ssh._tcp", "_workstation._tcp"],
+    "banner_regex": "(?i)raspbian",
+    "device_class": "IoT",
+    "model_hint": "Raspberry Pi",
+    "os_hint": "Linux"
+  },
+  {
+    "id": "apple",
+    "vendor_contains": ["apple"],
+    "mdns_services": ["_airplay._tcp", "_raop._tcp", "_companion-link._tcp", "_device-info._tcp", "_afpovertcp._tcp", "_rdlink._tcp"],
+    "device_class": "Unknown",
+    "os_hint": "Apple"
+  },
+  {
+    "id": "fritzbox",
+    "vendor_contains": ["avm audiovisuelles", "avm gmbh"],
+    "hostname_regex": "(?i)fritz\\.box|fritzbox|fritz!box",
+    "optional_ports": [53, 80, 443, 49000, 49443],
+    "http_title_regex": "(?i)fritz!box",
+    "model_regex": "(?i)fritz!box",
+    "device_class": "Router",
+    "model_hint": "FRITZ!Box"
+  },
+  {
+    "id": "fritz-repeater",
+    "vendor_contains": ["avm audiovisuelles", "avm gmbh"],
+    "hostname_regex": "(?i)fritz.?repeater|fritz.?powerline",
+    "http_title_regex": "(?i)fritz!(repeater|powerline|wlan repeater)",
+    "device_class": "AccessPoint",
+    "model_hint": "FRITZ!Repeater"
+  },
+  {
+    "id": "synology",
+    "vendor_contains": ["synology"],
+    "optional_ports": [5000, 5001, 445, 139],
+    "mdns_services": ["_smb._tcp", "_afpovertcp._tcp", "_http._tcp"],
+    "http_title_regex": "(?i)(synology|diskstation|rackstation)",
+    "model_regex": "(?i)^(ds|rs|dva)[0-9]",
+    "device_class": "Nas",
+    "model_hint": "Synology DiskStation"
+  },
+  {
+    "id": "qnap",
+    "vendor_contains": ["qnap"],
+    "optional_ports": [8080, 443, 445],
+    "http_title_regex": "(?i)qnap|qts",
+    "device_class": "Nas",
+    "model_hint": "QNAP NAS"
+  },
+  {
+    "id": "home-assistant",
+    "hostname_regex": "(?i)homeassistant|home-assistant|hassio",
+    "optional_ports": [8123],
+    "mdns_services": ["_home-assistant._tcp"],
+    "http_title_regex": "(?i)home assistant",
+    "device_class": "HomeAutomation",
+    "model_hint": "Home Assistant"
+  },
+  {
+    "id": "ubiquiti",
+    "vendor_contains": ["ubiquiti"],
+    "optional_ports": [22, 80, 443, 8080],
+    "http_title_regex": "(?i)(unifi|airos|edgeos|edgeswitch)",
+    "device_class": "AccessPoint",
+    "model_hint": "Ubiquiti UniFi"
+  },
+  {
+    "id": "mikrotik",
+    "vendor_contains": ["routerboard", "mikrotik"],
+    "optional_ports": [22, 80, 8291, 8728],
+    "http_title_regex": "(?i)(routeros|mikrotik)",
+    "http_server_regex": "(?i)mikrotik",
+    "device_class": "Router",
+    "model_hint": "MikroTik RouterBOARD"
+  },
+  {
+    "id": "firewall-appliance",
+    "vendor_contains": ["fortinet", "palo alto", "sophos", "watchguard", "sonicwall", "netgate"],
+    "optional_ports": [22, 443, 4443, 8443],
+    "http_title_regex": "(?i)(fortigate|pfsense|opnsense|sophos|palo alto|globalprotect|watchguard|sonicwall)",
+    "device_class": "Firewall"
+  },
+  {
+    "id": "pfsense-opnsense",
+    "http_title_regex": "(?i)(pfsense|opnsense)",
+    "optional_ports": [22, 80, 443],
+    "device_class": "Firewall",
+    "score": 20
+  },
+  {
+    "id": "network-switch",
+    "vendor_contains": ["cisco", "netgear", "zyxel", "d-link", "tp-link", "lancom", "juniper", "allied telesis"],
+    "forbidden_ports": [9100, 631, 3389],
+    "http_title_regex": "(?i)(switch|gs[0-9]{3}|jgs|sg[0-9]{3}|catalyst|dgs-|t1600|easy smart|prosafe|managed)",
+    "model_regex": "(?i)(switch|catalyst)",
+    "device_class": "Switch"
+  },
+  {
+    "id": "consumer-router",
+    "vendor_contains": ["tp-link", "netgear", "d-link", "zyxel", "asustek", "linksys", "huawei", "zte", "sagemcom", "technicolor", "arcadyan", "lancom", "draytek"],
+    "optional_ports": [53, 80, 443],
+    "http_title_regex": "(?i)(router|archer|nighthawk|speedport|easybox|vigor|gateway|login)",
+    "device_class": "Router"
+  },
+  {
+    "id": "sonos",
+    "vendor_contains": ["sonos"],
+    "optional_ports": [1400, 1443],
+    "mdns_services": ["_sonos._tcp", "_spotify-connect._tcp", "_airplay._tcp"],
+    "device_class": "MediaPlayer",
+    "model_hint": "Sonos"
+  },
+  {
+    "id": "chromecast",
+    "vendor_contains": ["google"],
+    "optional_ports": [8008, 8009, 8443],
+    "mdns_services": ["_googlecast._tcp"],
+    "device_class": "MediaPlayer",
+    "model_hint": "Google Cast"
+  },
+  {
+    "id": "smart-tv",
+    "vendor_contains": ["samsung", "lg electronics", "sony", "tcl", "hisense", "panasonic", "philips", "vestel", "roku"],
+    "optional_ports": [8001, 8002, 3000, 3001, 9080, 7000],
+    "mdns_services": ["_googlecast._tcp", "_airplay._tcp", "_androidtvremote2._tcp", "_lgtv._tcp", "_samsungmsf._tcp"],
+    "hostname_regex": "(?i)(tv|bravia|webos|tizen)",
+    "device_class": "Television"
+  },
+  {
+    "id": "amazon-echo",
+    "vendor_contains": ["amazon"],
+    "optional_ports": [4070, 8443],
+    "mdns_services": ["_amzn-wplay._tcp", "_amzn-alexa._tcp"],
+    "hostname_regex": "(?i)(echo|amazon|fire.?tv|kindle)",
+    "device_class": "MediaPlayer",
+    "model_hint": "Amazon Echo/Fire"
+  },
+  {
+    "id": "hue-bridge",
+    "vendor_contains": ["signify", "philips lighting"],
+    "mdns_services": ["_hue._tcp", "_hap._tcp"],
+    "http_title_regex": "(?i)hue",
+    "device_class": "HomeAutomation",
+    "model_hint": "Philips Hue Bridge"
+  },
+  {
+    "id": "shelly",
+    "vendor_contains": ["allterco", "shelly"],
+    "hostname_regex": "(?i)^shelly",
+    "http_title_regex": "(?i)shelly",
+    "mdns_services": ["_shelly._tcp"],
+    "device_class": "HomeAutomation",
+    "model_hint": "Shelly"
+  },
+  {
+    "id": "esp-iot",
+    "vendor_contains": ["espressif", "tuya", "shenzhen bilian", "beken"],
+    "hostname_regex": "(?i)^(esp|tasmota|wled|tuya|smartplug|shelly)",
+    "mdns_services": ["_esphomelib._tcp", "_wled._tcp", "_arduino._tcp"],
+    "http_title_regex": "(?i)(tasmota|esphome|wled)",
+    "device_class": "IoT"
+  },
+  {
+    "id": "ip-camera",
+    "vendor_contains": ["hikvision", "dahua", "ezviz", "axis communications", "reolink", "hanwha", "vivotek", "mobotix", "ubiquiti", "tp-link"],
+    "required_ports": [554],
+    "optional_ports": [80, 443, 8000, 37777],
+    "http_title_regex": "(?i)(hikvision|dahua|web service|ipcam|network camera|axis|reolink|tapo)",
+    "device_class": "Camera"
+  },
+  {
+    "id": "camera-vendor",
+    "vendor_contains": ["hikvision", "dahua", "ezviz", "axis communications", "reolink", "mobotix"],
+    "optional_ports": [80, 443, 554, 8000],
+    "device_class": "Camera",
+    "score": 10
+  },
+  {
+    "id": "windows-pc",
+    "required_ports": [445],
+    "optional_ports": [135, 139, 3389, 5985],
+    "banner_regex": "(?i)windows",
+    "http_server_regex": "(?i)microsoft-(iis|httpapi)",
+    "hostname_regex": "(?i)^(desktop|laptop|win|pc)-?[a-z0-9]+",
+    "device_class": "Desktop",
+    "os_hint": "Windows"
+  },
+  {
+    "id": "linux-server",
+    "required_ports": [22],
+    "banner_regex": "(?i)openssh.*(ubuntu|debian|centos|el[0-9]|fedora|alma|rocky)",
+    "optional_ports": [80, 443, 3306, 5432, 9200],
+    "device_class": "Server",
+    "os_hint": "Linux"
+  },
+  {
+    "id": "proxmox",
+    "required_ports": [8006],
+    "http_title_regex": "(?i)proxmox",
+    "tls_subject_regex": "(?i)proxmox|pve",
+    "device_class": "Server",
+    "model_hint": "Proxmox VE",
+    "os_hint": "Linux"
+  },
+  {
+    "id": "docker-host",
+    "required_ports": [2375],
+    "http_server_regex": "(?i)docker",
+    "device_class": "Server",
+    "model_hint": "Docker Host"
+  },
+  {
+    "id": "vm-nic",
+    "vendor_contains": ["vmware", "pcs systemtechnik", "xensource", "parallels", "nutanix"],
+    "device_class": "VirtualMachine",
+    "score": 20
+  },
+  {
+    "id": "hyperv-nic",
+    "vendor_contains": ["microsoft corporation"],
+    "optional_ports": [3389, 445, 22],
+    "device_class": "VirtualMachine",
+    "model_hint": "Hyper-V VM"
+  },
+  {
+    "id": "ups",
+    "vendor_contains": ["american power conversion", "schneider electric", "eaton", "cyberpower", "riello", "socomec"],
+    "optional_ports": [80, 443, 161],
+    "http_title_regex": "(?i)(apc|network management card|powerchute|eaton|ups)",
+    "model_regex": "(?i)(apc|smart-ups|ups)",
+    "device_class": "UPS"
+  },
+  {
+    "id": "game-console",
+    "vendor_contains": ["sony interactive", "nintendo"],
+    "hostname_regex": "(?i)(ps4|ps5|playstation|switch|nintendo|xbox)",
+    "device_class": "GameConsole",
+    "score": 10
+  },
+  {
+    "id": "nas-generic",
+    "vendor_contains": ["western digital", "buffalo", "asustor", "terramaster", "seagate", "netgear"],
+    "optional_ports": [445, 139, 548, 5000, 8080],
+    "mdns_services": ["_smb._tcp", "_afpovertcp._tcp", "_adisk._tcp"],
+    "http_title_regex": "(?i)(my cloud|terastation|linkstation|adm|tos|readynas)",
+    "device_class": "Nas"
+  },
+  {
+    "id": "phone-hostname",
+    "hostname_regex": "(?i)(iphone|android|galaxy|pixel|redmi|xiaomi|oneplus|huawei-p|moto)",
+    "device_class": "Smartphone"
+  },
+  {
+    "id": "tablet-hostname",
+    "hostname_regex": "(?i)(ipad|galaxy-tab|tab-s|kindle|fire-)",
+    "device_class": "Tablet"
+  },
+  {
+    "id": "mqtt-broker",
+    "required_ports": [1883],
+    "optional_ports": [8883, 8123],
+    "hostname_regex": "(?i)(mqtt|mosquitto|broker)",
+    "device_class": "HomeAutomation",
+    "model_hint": "MQTT Broker"
+  }
+]

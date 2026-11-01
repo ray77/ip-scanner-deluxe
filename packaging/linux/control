@@ -1,0 +1,11 @@
+Package: ip-scanner-deluxe
+Version: @VERSION@
+Section: net
+Priority: optional
+Architecture: @ARCH@
+Depends: libc6, libgl1, libxkbcommon0
+Recommends: libxkbcommon-x11-0, libwayland-client0
+Maintainer: IP Scanner Deluxe contributors <noreply@example.invalid>
+Description: Fast, local, cross-platform LAN scanner
+ Native Rust network scanner with device detection, vendor lookup
+ (offline IEEE OUI database), ping, traceroute, Wake-on-LAN and export.

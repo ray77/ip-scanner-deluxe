@@ -1,0 +1,18 @@
+[package]
+name = "storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Local persistence (redb): settings, favorites, annotations, scan history"
+
+[dependencies]
+scan-core.workspace = true
+platform.workspace = true
+vendor-db.workspace = true
+redb.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+directories.workspace = true

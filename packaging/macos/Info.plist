@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>IP Scanner Deluxe</string>
+	<key>CFBundleDisplayName</key>
+	<string>IP Scanner Deluxe</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.ipscannerdeluxe.app</string>
+	<key>CFBundleExecutable</key>
+	<string>IPScannerDeluxe</string>
+	<key>CFBundleIconFile</key>
+	<string>IPScannerDeluxe</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>IP Scanner Deluxe durchsucht Ihr lokales Netzwerk nach Geräten (Ping, ARP, Ports, Namen). / IP Scanner Deluxe scans your local network for devices.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_https._tcp</string>
+		<string>_ipp._tcp</string>
+		<string>_ipps._tcp</string>
+		<string>_printer._tcp</string>
+		<string>_pdl-datastream._tcp</string>
+		<string>_scanner._tcp</string>
+		<string>_uscan._tcp</string>
+		<string>_smb._tcp</string>
+		<string>_afpovertcp._tcp</string>
+		<string>_ssh._tcp</string>
+		<string>_sftp-ssh._tcp</string>
+		<string>_rfb._tcp</string>
+		<string>_airplay._tcp</string>
+		<string>_raop._tcp</string>
+		<string>_googlecast._tcp</string>
+		<string>_spotify-connect._tcp</string>
+		<string>_sonos._tcp</string>
+		<string>_hap._tcp</string>
+		<string>_hue._tcp</string>
+		<string>_home-assistant._tcp</string>
+		<string>_workstation._tcp</string>
+		<string>_device-info._tcp</string>
+		<string>_companion-link._tcp</string>
+		<string>_adisk._tcp</string>
+		<string>_esphomelib._tcp</string>
+		<string>_amzn-wplay._tcp</string>
+	</array>
+</dict>
+</plist>

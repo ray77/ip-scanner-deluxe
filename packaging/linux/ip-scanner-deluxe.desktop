@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=IP Scanner Deluxe
+GenericName=Network Scanner
+GenericName[de]=Netzwerkscanner
+Comment=Fast local LAN scanner
+Comment[de]=Schneller lokaler Netzwerkscanner
+Exec=IPScannerDeluxe
+Icon=ip-scanner-deluxe
+Terminal=false
+Categories=Network;System;Utility;
+Keywords=network;scanner;lan;ip;ping;wol;
+StartupWMClass=ip-scanner-deluxe

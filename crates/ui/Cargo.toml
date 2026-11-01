@@ -1,0 +1,16 @@
+[package]
+name = "ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "egui widgets, theme, icons and translations of IP Scanner Deluxe"
+
+[dependencies]
+egui.workspace = true
+scan-core.workspace = true
+storage.workspace = true
+fingerprint.workspace = true
+platform.workspace = true
+vendor-db.workspace = true
+sys-locale.workspace = true

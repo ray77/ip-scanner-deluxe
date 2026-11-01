@@ -1,0 +1,188 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Linux GUI dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxi-dev libwayland-dev
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Linux GUI dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxi-dev libwayland-dev
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+
+  msrv:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.90
+      - run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxi-dev libwayland-dev
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --workspace --locked
+
+  build-windows:
+    needs: [fmt]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked -p ip-scanner-deluxe
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/IPScannerDeluxe | Out-Null
+          Copy-Item target/release/IPScannerDeluxe.exe dist/IPScannerDeluxe/
+          Copy-Item README.md, LICENSE-MIT, LICENSE-APACHE dist/IPScannerDeluxe/
+          New-Item -ItemType File dist/IPScannerDeluxe/portable.flag | Out-Null
+          Compress-Archive -Path dist/IPScannerDeluxe -DestinationPath dist/IPScannerDeluxe-windows-x86_64-portable.zip
+          Copy-Item target/release/IPScannerDeluxe.exe dist/IPScannerDeluxe.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IPScannerDeluxe-windows-x86_64
+          path: |
+            dist/IPScannerDeluxe.exe
+            dist/IPScannerDeluxe-windows-x86_64-portable.zip
+
+  build-linux:
+    needs: [fmt]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: x86_64
+            deb_arch: amd64
+          - runner: ubuntu-22.04-arm
+            arch: aarch64
+            deb_arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxi-dev libwayland-dev
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked -p ip-scanner-deluxe
+      - name: tar.gz
+        run: |
+          VERSION=$(cargo pkgid -p ip-scanner-deluxe | sed 's/.*[#@]//')
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          mkdir -p dist/IPScannerDeluxe
+          cp target/release/IPScannerDeluxe README.md LICENSE-MIT LICENSE-APACHE dist/IPScannerDeluxe/
+          cp packaging/linux/ip-scanner-deluxe.desktop packaging/icons/ip-scanner-deluxe.png dist/IPScannerDeluxe/
+          tar -C dist -czf dist/IPScannerDeluxe-linux-${{ matrix.arch }}.tar.gz IPScannerDeluxe
+      - name: deb
+        run: |
+          R=dist/deb
+          install -Dm755 target/release/IPScannerDeluxe $R/usr/bin/IPScannerDeluxe
+          install -Dm644 packaging/linux/ip-scanner-deluxe.desktop $R/usr/share/applications/ip-scanner-deluxe.desktop
+          install -Dm644 packaging/icons/ip-scanner-deluxe.png $R/usr/share/icons/hicolor/256x256/apps/ip-scanner-deluxe.png
+          install -Dm644 LICENSE-MIT $R/usr/share/doc/ip-scanner-deluxe/LICENSE-MIT
+          install -Dm644 LICENSE-APACHE $R/usr/share/doc/ip-scanner-deluxe/LICENSE-APACHE
+          install -Dm755 packaging/linux/postinst $R/DEBIAN/postinst
+          sed -e "s/@VERSION@/$VERSION/" -e "s/@ARCH@/${{ matrix.deb_arch }}/" packaging/linux/control > $R/DEBIAN/control
+          dpkg-deb --root-owner-group --build $R dist/ip-scanner-deluxe_${VERSION}_${{ matrix.deb_arch }}.deb
+      - name: AppImage
+        run: |
+          A=dist/IPScannerDeluxe.AppDir
+          install -Dm755 target/release/IPScannerDeluxe $A/usr/bin/IPScannerDeluxe
+          install -Dm644 packaging/linux/ip-scanner-deluxe.desktop $A/ip-scanner-deluxe.desktop
+          install -Dm644 packaging/icons/ip-scanner-deluxe.png $A/ip-scanner-deluxe.png
+          ln -s usr/bin/IPScannerDeluxe $A/AppRun
+          curl -fsSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${{ matrix.arch }}.AppImage
+          chmod +x appimagetool
+          ARCH=${{ matrix.arch }} ./appimagetool --appimage-extract-and-run $A dist/IPScannerDeluxe-linux-${{ matrix.arch }}.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IPScannerDeluxe-linux-${{ matrix.arch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.deb
+            dist/*.AppImage
+
+  build-macos:
+    needs: [fmt]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm64
+            target: aarch64-apple-darwin
+          - name: macos-intel
+            target: x86_64-apple-darwin
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - run: cargo xtask bundle-macos ${{ matrix.target }}
+      - name: DMG
+        run: |
+          mv dist/IPScannerDeluxe-macos.zip dist/IPScannerDeluxe-${{ matrix.name }}.zip
+          hdiutil create -volname "IP Scanner Deluxe" -srcfolder "dist/IP Scanner Deluxe.app" -ov -format UDZO dist/IPScannerDeluxe-${{ matrix.name }}.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IPScannerDeluxe-${{ matrix.name }}
+          path: |
+            dist/*.zip
+            dist/*.dmg
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [clippy, test, build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*

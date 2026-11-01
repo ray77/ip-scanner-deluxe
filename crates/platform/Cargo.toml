@@ -1,0 +1,30 @@
+[package]
+name = "platform"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "OS specific networking: interfaces, neighbor tables, ICMP, client launching, remote power"
+
+[dependencies]
+vendor-db.workspace = true
+netdev.workspace = true
+socket2.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+open.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_Networking_WinSock",
+    "Win32_System_Shutdown",
+    "Win32_Security",
+] }
