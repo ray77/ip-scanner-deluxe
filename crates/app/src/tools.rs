@@ -82,7 +82,7 @@ pub fn start_ping(rt: &tokio::runtime::Handle, ip: IpAddr, continuous: bool, id:
             }
         }
         let recv = rtts.len() as u32;
-        let loss = if sent == 0 { 0 } else { (sent - recv) * 100 / sent };
+        let loss = ((sent - recv) * 100).checked_div(sent).unwrap_or(0);
         push(&out, String::new(), &repaint);
         push(&out, tf("ping.stats", &[("s", &sent.to_string()), ("r", &recv.to_string()), ("l", &loss.to_string())]), &repaint);
         if !rtts.is_empty() {

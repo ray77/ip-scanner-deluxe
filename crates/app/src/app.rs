@@ -489,7 +489,7 @@ impl App {
     fn status_text(&self) -> (String, Option<f32>) {
         let (a, d, u) = self.data.counts();
         if let Some(s) = self.scan.as_ref().filter(|s| !s.finished) {
-            let pct = if s.total == 0 { 0 } else { s.completed * 100 / s.total };
+            let pct = (s.completed * 100).checked_div(s.total).unwrap_or(0);
             let mut text = tf(
                 "sb.progress",
                 &[("c", &s.completed.to_string()), ("t", &s.total.to_string()), ("a", &a.to_string()), ("p", &pct.to_string())],
