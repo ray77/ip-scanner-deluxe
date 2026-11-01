@@ -130,7 +130,7 @@ pub fn show(
     crate::widgets::gradient_rect(&hp, header_rect, 0.0, pal.header_bg, pal.header_bg_bottom);
     hp.line_segment(
         [header_rect.left_bottom() - vec2(0.0, 0.5), header_rect.right_bottom() - vec2(0.0, 0.5)],
-        Stroke::new(1.0, pal.header_border),
+        Stroke::new(1.0_f32, pal.header_border),
     );
     let mut x = header_rect.min.x - st.h_offset;
     let mut col_spans: Vec<(Column, f32, f32)> = Vec::new();
@@ -147,7 +147,7 @@ pub fn show(
         if resp.hovered() && st.drag.is_none() && st.resize.is_none() {
             hp.rect_filled(cell, CornerRadius::ZERO, if pal.dark { pal.hover_bg } else { Color32::from_rgb(0xD9, 0xEB, 0xF9) });
         }
-        hp.line_segment([pos2(x1 - 0.5, cell.min.y + 3.0), pos2(x1 - 0.5, cell.max.y - 3.0)], Stroke::new(1.0, pal.header_border));
+        hp.line_segment([pos2(x1 - 0.5, cell.min.y + 3.0), pos2(x1 - 0.5, cell.max.y - 3.0)], Stroke::new(1.0_f32, pal.header_border));
         let text_w = (x1 - x0 - 12.0).max(4.0);
         let galley = ui.fonts_mut(|f| f.layout_job(truncated(t(c.key()), font(12.0), pal.text_primary, text_w)));
         hp.galley(pos2(x0 + 6.0, cell.center().y - galley.size().y / 2.0 + 1.0), galley, pal.text_primary);
@@ -160,7 +160,7 @@ pub fn show(
             } else {
                 vec![pos2(cx - 4.0, y), pos2(cx, y + 3.5), pos2(cx + 4.0, y)]
             };
-            hp.add(egui::Shape::line(pts, Stroke::new(1.0, pal.text_secondary)));
+            hp.add(egui::Shape::line(pts, Stroke::new(1.0_f32, pal.text_secondary)));
         }
         // Resize handle on the right edge.
         let handle = Rect::from_min_max(pos2(x1 - 4.0, cell.min.y), pos2(x1 + 3.0, cell.max.y));
@@ -206,12 +206,12 @@ pub fn show(
             let ghost = Rect::from_min_size(pos2(p.x - drag.grab_dx, header_rect.min.y), vec2(w, HEADER_H));
             let fg = painter.clone().with_layer_id(egui::LayerId::new(egui::Order::Tooltip, Id::new("hdr_ghost")));
             fg.rect_filled(ghost, CornerRadius::ZERO, pal.selected_bg.gamma_multiply(0.9));
-            fg.rect_stroke(ghost, CornerRadius::ZERO, Stroke::new(1.0, pal.selected_border), StrokeKind::Inside);
+            fg.rect_stroke(ghost, CornerRadius::ZERO, Stroke::new(1.0_f32, pal.selected_border), StrokeKind::Inside);
             fg.text(ghost.left_center() + vec2(6.0, 0.0), Align2::LEFT_CENTER, t(drag.column.key()), font(12.0), pal.text_primary);
             // insertion marker
             let target = col_spans.iter().position(|(_, a, b)| p.x < (a + b) / 2.0).unwrap_or(col_spans.len()).max(1);
             let mx = if target < col_spans.len() { col_spans[target].1 } else { col_spans.last().map(|s| s.2).unwrap_or(0.0) };
-            fg.line_segment([pos2(mx, header_rect.min.y), pos2(mx, header_rect.max.y)], Stroke::new(2.0, pal.icon_screen));
+            fg.line_segment([pos2(mx, header_rect.min.y), pos2(mx, header_rect.max.y)], Stroke::new(2.0_f32, pal.icon_screen));
             if ui.input(|i| i.pointer.any_released()) {
                 if let Some(from) = cfg.columns.iter().position(|c| *c == drag.column) {
                     let mut to = target;
@@ -342,7 +342,7 @@ pub fn show(
                 painter.rect_filled(rr, CornerRadius::ZERO, bg);
             }
             if sel {
-                painter.rect_stroke(rr, CornerRadius::ZERO, Stroke::new(1.0, pal.selected_border), StrokeKind::Inside);
+                painter.rect_stroke(rr, CornerRadius::ZERO, Stroke::new(1.0_f32, pal.selected_border), StrokeKind::Inside);
             }
             let text_color = match row.status {
                 HostStatus::NoResponse | HostStatus::Unknown => pal.text_secondary,
@@ -430,6 +430,6 @@ pub fn show(
     if any_spinner {
         ui.ctx().request_repaint_after(std::time::Duration::from_millis(50));
     }
-    painter.rect_stroke(outer, CornerRadius::ZERO, Stroke::new(1.0, pal.border), StrokeKind::Inside);
+    painter.rect_stroke(outer, CornerRadius::ZERO, Stroke::new(1.0_f32, pal.border), StrokeKind::Inside);
     changed
 }

@@ -54,11 +54,11 @@ pub fn scan_button(ui: &mut Ui, pal: &ThemePalette, scanning: bool) -> Response 
         bottom = bottom.gamma_multiply(1.08);
     }
     gradient_rect(painter, rect, 3.0, top, bottom);
-    painter.rect_stroke(rect, CornerRadius::same(3), Stroke::new(1.0, border), StrokeKind::Inside);
+    painter.rect_stroke(rect, CornerRadius::same(3), Stroke::new(1.0_f32, border), StrokeKind::Inside);
     // Inner highlight line
     painter.line_segment(
         [pos2(rect.min.x + 3.0, rect.min.y + 1.5), pos2(rect.max.x - 3.0, rect.min.y + 1.5)],
-        Stroke::new(1.0, Color32::from_white_alpha(50)),
+        Stroke::new(1.0_f32, Color32::from_white_alpha(50)),
     );
     let icon = Rect::from_min_size(pos2(rect.min.x + 10.0, rect.center().y - 9.0), vec2(18.0, 18.0));
     if scanning {
@@ -88,7 +88,7 @@ pub fn tool_button(ui: &mut Ui, pal: &ThemePalette, enabled: bool, checked: bool
         };
         let bg = if resp.is_pointer_button_down_on() || checked { pal.selected_bg } else { bg };
         painter.rect_filled(rect, CornerRadius::same(2), bg);
-        painter.rect_stroke(rect, CornerRadius::same(2), Stroke::new(1.0, br), StrokeKind::Inside);
+        painter.rect_stroke(rect, CornerRadius::same(2), Stroke::new(1.0_f32, br), StrokeKind::Inside);
     }
     let icon = Rect::from_center_size(rect.center(), vec2(20.0, 20.0));
     if enabled {
@@ -104,7 +104,7 @@ pub fn tool_button(ui: &mut Ui, pal: &ThemePalette, enabled: bool, checked: bool
 pub fn toolbar_separator(ui: &mut Ui, pal: &ThemePalette) {
     let (rect, _) = ui.allocate_exact_size(vec2(9.0, 30.0), Sense::hover());
     let x = rect.center().x;
-    ui.painter().line_segment([pos2(x, rect.min.y + 2.0), pos2(x, rect.max.y - 2.0)], Stroke::new(1.0, pal.toolbar_border));
+    ui.painter().line_segment([pos2(x, rect.min.y + 2.0), pos2(x, rect.max.y - 2.0)], Stroke::new(1.0_f32, pal.toolbar_border));
 }
 
 fn field_frame(ui: &Ui, rect: Rect, pal: &ThemePalette, focused: bool, error: bool) {
@@ -120,7 +120,7 @@ fn field_frame(ui: &Ui, rect: Rect, pal: &ThemePalette, focused: bool, error: bo
         pal.input_border
     };
     ui.painter().rect_filled(rect, CornerRadius::ZERO, pal.input_bg);
-    ui.painter().rect_stroke(rect, CornerRadius::ZERO, Stroke::new(1.0, border), StrokeKind::Inside);
+    ui.painter().rect_stroke(rect, CornerRadius::ZERO, Stroke::new(1.0_f32, border), StrokeKind::Inside);
 }
 
 /// IP range input with history drop-down. Returns (text response, chosen history entry).
@@ -239,7 +239,7 @@ pub fn tabs(ui: &mut Ui, pal: &ThemePalette, labels: &[&str], active: usize) -> 
             pal.tab_inactive_bg
         };
         painter.rect_filled(r, CornerRadius { nw: 2, ne: 2, sw: 0, se: 0 }, bg);
-        painter.rect_stroke(r, CornerRadius { nw: 2, ne: 2, sw: 0, se: 0 }, Stroke::new(1.0, pal.border), StrokeKind::Inside);
+        painter.rect_stroke(r, CornerRadius { nw: 2, ne: 2, sw: 0, se: 0 }, Stroke::new(1.0_f32, pal.border), StrokeKind::Inside);
         painter.text(r.center() + vec2(0.0, 1.0), Align2::CENTER_CENTER, *label, font(12.0), pal.text_primary);
         if is_active {
             active_rect = Some(r);
@@ -249,9 +249,9 @@ pub fn tabs(ui: &mut Ui, pal: &ThemePalette, labels: &[&str], active: usize) -> 
         }
         x += w + 1.0;
     }
-    painter.line_segment([pos2(strip.min.x, base_y), pos2(strip.max.x, base_y)], Stroke::new(1.0, pal.border));
+    painter.line_segment([pos2(strip.min.x, base_y), pos2(strip.max.x, base_y)], Stroke::new(1.0_f32, pal.border));
     if let Some(r) = active_rect {
-        painter.line_segment([pos2(r.min.x + 1.0, base_y), pos2(r.max.x - 1.0, base_y)], Stroke::new(1.0, pal.tab_active_bg));
+        painter.line_segment([pos2(r.min.x + 1.0, base_y), pos2(r.max.x - 1.0, base_y)], Stroke::new(1.0_f32, pal.tab_active_bg));
     }
     clicked
 }
@@ -264,7 +264,7 @@ const STATUS_PAD_X: f32 = crate::theme::SIDE_MARGIN + 4.0;
 pub fn status_bar(ui: &mut Ui, pal: &ThemePalette, left: &str, warning: Option<&str>, progress: Option<f32>, right: &str) {
     let rect = ui.available_rect_before_wrap();
     let painter = ui.painter();
-    painter.line_segment([rect.left_top(), rect.right_top()], Stroke::new(1.0, pal.toolbar_border));
+    painter.line_segment([rect.left_top(), rect.right_top()], Stroke::new(1.0_f32, pal.toolbar_border));
     let y = rect.center().y + 0.5;
     let mut x = rect.min.x + STATUS_PAD_X;
     if let Some(w) = warning {
@@ -285,7 +285,7 @@ pub fn status_bar(ui: &mut Ui, pal: &ThemePalette, left: &str, warning: Option<&
         if w > 30.0 {
             let bar = Rect::from_min_size(pos2(right_edge - w, y - 6.0), vec2(w, 12.0));
             painter.rect_filled(bar, CornerRadius::ZERO, if pal.dark { pal.input_bg } else { Color32::from_rgb(0xE6, 0xE6, 0xE6) });
-            painter.rect_stroke(bar, CornerRadius::ZERO, Stroke::new(1.0, pal.input_border), StrokeKind::Inside);
+            painter.rect_stroke(bar, CornerRadius::ZERO, Stroke::new(1.0_f32, pal.input_border), StrokeKind::Inside);
             let fillw = (bar.width() - 2.0) * p.clamp(0.0, 1.0);
             painter.rect_filled(
                 Rect::from_min_size(bar.min + vec2(1.0, 1.0), vec2(fillw, bar.height() - 2.0)),

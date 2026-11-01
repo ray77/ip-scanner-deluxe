@@ -439,7 +439,7 @@ pub fn chevron(painter: &Painter, r: Rect, expanded: bool, color: Color32) {
         poly(painter, vec![pos2(c.x + h, c.y - h), pos2(c.x + h, c.y + h), pos2(c.x - h, c.y + h)], color);
     } else {
         let pts = vec![pos2(c.x - h * 0.6, c.y - h * 1.2), pos2(c.x + h * 0.8, c.y), pos2(c.x - h * 0.6, c.y + h * 1.2)];
-        painter.add(Shape::closed_line(pts, Stroke::new(1.0, color)));
+        painter.add(Shape::closed_line(pts, Stroke::new(1.0_f32, color)));
     }
 }
 
@@ -501,7 +501,7 @@ pub fn star(painter: &Painter, r: Rect, color: Color32, filled: bool) {
             poly(painter, vec![c, pts[i], pts[(i + 1) % 10]], color);
         }
     } else {
-        painter.add(Shape::closed_line(pts, Stroke::new(1.0, color)));
+        painter.add(Shape::closed_line(pts, Stroke::new(1.0_f32, color)));
     }
 }
 

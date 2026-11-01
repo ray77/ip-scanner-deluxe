@@ -600,7 +600,7 @@ impl eframe::App for App {
         // Toolbar (~50 px)
         egui::TopBottomPanel::top("toolbar")
             .exact_height(50.0)
-            .frame(egui::Frame::new().fill(pal.toolbar_bg).stroke(egui::Stroke::new(1.0, pal.toolbar_border)))
+            .frame(egui::Frame::new().fill(pal.toolbar_bg).stroke(egui::Stroke::new(1.0_f32, pal.toolbar_border)))
             .show(ctx, |ui| {
                 let st = ToolbarState {
                     scanning,

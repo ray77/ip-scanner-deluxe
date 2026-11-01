@@ -36,7 +36,7 @@ fn window(ctx: &Context, id: &str, title: &str, size: [f32; 2], pal: &ThemePalet
 }
 
 fn mono_box(ui: &mut Ui, pal: &ThemePalette, text: &str, height: f32) {
-    egui::Frame::new().fill(pal.input_bg).stroke(egui::Stroke::new(1.0, pal.input_border)).inner_margin(egui::Margin::same(6)).show(
+    egui::Frame::new().fill(pal.input_bg).stroke(egui::Stroke::new(1.0_f32, pal.input_border)).inner_margin(egui::Margin::same(6)).show(
         ui,
         |ui| {
             egui::ScrollArea::vertical().max_height(height).auto_shrink([false, false]).stick_to_bottom(true).show(ui, |ui| {
