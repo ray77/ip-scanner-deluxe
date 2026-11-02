@@ -183,6 +183,8 @@ For host discovery when ICMP is filtered, ports 22, 80, 443, 445, 3389, 8080, 84
   no community brute-forcing.
 - Only scan networks you are authorized to scan.
 
+Full privacy policy: [PRIVACY.md](PRIVACY.md).
+
 ## License notes
 
 Copyright © 2026 Dominik Schmidt. This project is licensed under **MIT OR Apache-2.0**, at your

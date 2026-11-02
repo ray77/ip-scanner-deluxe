@@ -182,6 +182,8 @@ Für die Host-Erkennung bei gefiltertem ICMP werden zusätzlich 22, 80, 443, 445
   kein Durchprobieren von Communities.
 - Scannen Sie nur Netzwerke, für die Sie berechtigt sind.
 
+Vollständige Datenschutzerklärung: [PRIVACY.md](PRIVACY.md) (englisch und deutsch).
+
 ## Lizenzhinweise
 
 Copyright © 2026 Dominik Schmidt. Dieses Projekt steht nach Wahl unter **MIT OR Apache-2.0**

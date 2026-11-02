@@ -185,36 +185,16 @@ other products' names (for example competing scanners or their makers) in
 the name, description or keywords, and do not describe it as a hacking or
 security attack tool.
 
-- **Name:** IP Scanner Deluxe
-- **Category:** Utilities & tools (subcategory: network tools if offered)
-- **Short description:** Fast, free network scanner for your local network:
-  find devices, MAC addresses and open services.
-- **Description:**
-
-  > IP Scanner Deluxe finds all devices on your local network within seconds
-  > and shows their name, IP address, manufacturer and MAC address.
-  >
-  > - Network discovery for IPv4 and IPv6 ranges
-  > - MAC address and manufacturer lookup with a built-in offline database
-  > - Detects HTTP/HTTPS, SMB shares, RDP, SSH, FTP and printers
-  > - Port scanner for selected hosts
-  > - Wake on LAN, remote desktop, SSH and browser launch from the context menu
-  > - Remote shutdown and restart of Windows computers (with confirmation)
-  > - Favorites, comments and export to CSV, HTML, JSON and XML
-  > - No account, no telemetry, no cloud: all data stays on your computer
-  > - Free and open source (MIT OR Apache-2.0)
-
-- **Search terms (max. 7):** IP scanner, LAN scanner, network scanner,
-  network discovery, port scanner, MAC address, Wake on LAN
-- **Privacy policy URL:** required for apps with network access; a short
-  page stating "no data collection, no telemetry" is enough (for example a
-  `PRIVACY.md` in the repository).
-- **Pricing:** free.
+Ready-to-paste texts (English and German), search terms, screenshots
+(1366×768) and the 300×300 logo are in
+[packaging/windows/store-listing/](../packaging/windows/store-listing/README.md).
+Privacy policy: [PRIVACY.md](../PRIVACY.md), URL
+<https://github.com/ray77/ip-scanner-deluxe/blob/main/PRIVACY.md>.
 
 ## Partner Center steps
 
 1. Register a developer account at <https://partner.microsoft.com/dashboard>
-   (individual account is fine; one-time fee).
+   (an individual account is enough; check the current registration fee).
 2. Apps and games > New product > MSIX or PWA app; reserve the name
    "IP Scanner Deluxe".
 3. Product management > Product identity: copy `Package/Identity/Name`,
@@ -223,13 +203,13 @@ security attack tool.
    `packaging/windows/msix/store-identity.json` and commit.
 4. Start a submission:
    - Pricing and availability: free, markets.
-   - Properties: category, privacy policy URL, system requirements.
+   - Properties: category "Utilities & tools", privacy policy URL,
+     website and support contact (see the store listing file).
    - Age ratings questionnaire.
    - Packages: upload `IPScannerDeluxe-<version>-x64-store.msix` from the
      `msix-store-x64` artifact of the tagged CI run.
-   - Store listings (English, German): description, screenshots
-     (`docs/screenshots/`), search terms, 300×300 logo
-     (`packaging/icons/ip-scanner-deluxe.png` scaled).
+   - Store listings (English, German): texts, screenshots and logo from
+     `packaging/windows/store-listing/`.
    - Submission options > Notes for certification: paste
      `packaging/windows/msix/STORE_CERTIFICATION_NOTES.md`.
    - Restricted capabilities: justify `runFullTrust` (same text).
