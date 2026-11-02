@@ -173,6 +173,7 @@ impl App {
                 self.toast(t("msg.copied"), false);
             }
             UiCommand::WakeOnLan(ip) => self.wake_on_lan(ip),
+            UiCommand::Shutdown(_) | UiCommand::Reboot(_) if !crate::REMOTE_POWER => {}
             UiCommand::Shutdown(ip) => {
                 self.dialogs.power = Some(PowerDialog { ip, reboot: false, message: String::new(), timeout: 30, force: false })
             }

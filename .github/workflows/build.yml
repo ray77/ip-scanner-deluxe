@@ -52,6 +52,22 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace
 
+  licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.20.2,cargo-about@0.9.3
+      - name: Dependency licenses and sources
+        run: cargo deny --locked check licenses sources
+      - name: THIRD-PARTY-NOTICES.txt is up to date
+        run: |
+          cargo fetch --locked
+          cargo xtask third-party-notices
+          git diff --exit-code THIRD-PARTY-NOTICES.txt || { echo "::error::THIRD-PARTY-NOTICES.txt is outdated: run cargo xtask third-party-notices"; exit 1; }
+
   msrv:
     runs-on: ubuntu-22.04
     steps:
@@ -82,7 +98,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force dist/IPScannerDeluxe | Out-Null
           Copy-Item target/release/IPScannerDeluxe.exe dist/IPScannerDeluxe/
-          Copy-Item README.md, README.de.md, LICENSE-MIT, LICENSE-APACHE dist/IPScannerDeluxe/
+          Copy-Item README.md, README.de.md, LICENSE-MIT, LICENSE-APACHE, THIRD-PARTY-NOTICES.txt dist/IPScannerDeluxe/
           New-Item -ItemType File dist/IPScannerDeluxe/portable.flag | Out-Null
           Compress-Archive -Path dist/IPScannerDeluxe -DestinationPath dist/IPScannerDeluxe-windows-x86_64-portable.zip
           Copy-Item target/release/IPScannerDeluxe.exe dist/IPScannerDeluxe.exe
@@ -92,6 +108,70 @@ jobs:
           path: |
             dist/IPScannerDeluxe.exe
             dist/IPScannerDeluxe-windows-x86_64-portable.zip
+
+  # Microsoft Store package. The uploaded .msix is unsigned: Partner Center
+  # signs it after certification. A throwaway self-signed certificate is only
+  # used to prove the package installs; it never leaves the runner.
+  build-msix:
+    needs: [fmt]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: store
+      - run: cargo build --release --locked -p ip-scanner-deluxe --features store
+      - name: Build MSIX
+        id: msix
+        shell: pwsh
+        run: ./packaging/windows/msix/scripts/build-msix.ps1 -Exe target/release/IPScannerDeluxe.exe -OutDir dist
+      - name: Verify package contents
+        shell: pwsh
+        run: |
+          $kits = "${env:ProgramFiles(x86)}\Windows Kits\10\bin"
+          $makeappx = Get-ChildItem $kits -Recurse -Filter makeappx.exe | Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+          & $makeappx.FullName unpack /o /p "${{ steps.msix.outputs.msix }}" /d dist/unpacked
+          if ($LASTEXITCODE) { throw "unpack failed" }
+          Get-ChildItem dist/unpacked -Recurse | Select-Object -ExpandProperty FullName
+          [xml]$m = Get-Content dist/unpacked/AppxManifest.xml
+          $app = $m.Package.Applications.Application
+          $checks = @{
+            "version"           = $m.Package.Identity.Version -eq "${{ steps.msix.outputs.version }}"
+            "packagedClassicApp" = $app.RuntimeBehavior -eq "packagedClassicApp"
+            "mediumIL"          = $app.TrustLevel -eq "mediumIL"
+            "runFullTrust"      = $m.OuterXml -match 'Capability Name="runFullTrust"'
+            "exe"               = Test-Path dist/unpacked/IPScannerDeluxe.exe
+            "licenses"          = (Test-Path dist/unpacked/LICENSE-MIT) -and (Test-Path dist/unpacked/LICENSE-APACHE) -and (Test-Path dist/unpacked/THIRD-PARTY-NOTICES.txt)
+            "no portable.flag"  = -not (Get-ChildItem dist/unpacked -Recurse -Filter portable.flag)
+            "no keys"           = -not (Get-ChildItem dist/unpacked -Recurse -Include *.pfx, *.p12, *.pem, *.key)
+          }
+          $checks.GetEnumerator() | ForEach-Object { "{0,-20} {1}" -f $_.Key, $_.Value }
+          if ($checks.Values -contains $false) { throw "MSIX verification failed" }
+      - name: Test install with a throwaway certificate
+        shell: pwsh
+        run: |
+          Copy-Item "${{ steps.msix.outputs.msix }}" $env:RUNNER_TEMP/test.msix
+          $out = & ./packaging/windows/msix/scripts/new-test-certificate.ps1 -CerFile $env:RUNNER_TEMP/test.cer
+          $out
+          $thumb = (Get-ChildItem Cert:\CurrentUser\My | Where-Object FriendlyName -like "IP Scanner Deluxe MSIX test*" | Select-Object -First 1).Thumbprint
+          Import-Certificate -FilePath $env:RUNNER_TEMP/test.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+          $kits = "${env:ProgramFiles(x86)}\Windows Kits\10\bin"
+          $signtool = Get-ChildItem $kits -Recurse -Filter signtool.exe | Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+          & $signtool.FullName sign /fd SHA256 /sha1 $thumb /s My $env:RUNNER_TEMP/test.msix
+          if ($LASTEXITCODE) { throw "signing failed" }
+          Add-AppxPackage -Path $env:RUNNER_TEMP/test.msix
+          $pkg = Get-AppxPackage -Name (Get-Content packaging/windows/msix/store-identity.json -Raw | ConvertFrom-Json).IdentityName
+          $pkg | Format-List Name, Version, Architecture, SignatureKind, InstallLocation
+          if (-not $pkg) { throw "package not installed" }
+          if (Test-Path (Join-Path $pkg.InstallLocation "portable.flag")) { throw "portable.flag installed" }
+          Remove-AppxPackage -Package $pkg.PackageFullName
+          Remove-Item "Cert:\CurrentUser\My\$thumb"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: msix-store-x64
+          path: ${{ steps.msix.outputs.msix }}
+          retention-days: 90
 
   build-linux:
     needs: [fmt]
@@ -117,7 +197,7 @@ jobs:
           VERSION=$(cargo pkgid -p ip-scanner-deluxe | sed 's/.*[#@]//')
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           mkdir -p dist/IPScannerDeluxe
-          cp target/release/IPScannerDeluxe README.md README.de.md LICENSE-MIT LICENSE-APACHE dist/IPScannerDeluxe/
+          cp target/release/IPScannerDeluxe README.md README.de.md LICENSE-MIT LICENSE-APACHE THIRD-PARTY-NOTICES.txt dist/IPScannerDeluxe/
           cp packaging/linux/ip-scanner-deluxe.desktop packaging/icons/ip-scanner-deluxe.png dist/IPScannerDeluxe/
           tar -C dist -czf dist/IPScannerDeluxe-linux-${{ matrix.arch }}.tar.gz IPScannerDeluxe
       - name: deb
@@ -128,6 +208,7 @@ jobs:
           install -Dm644 packaging/icons/ip-scanner-deluxe.png $R/usr/share/icons/hicolor/512x512/apps/ip-scanner-deluxe.png
           install -Dm644 LICENSE-MIT $R/usr/share/doc/ip-scanner-deluxe/LICENSE-MIT
           install -Dm644 LICENSE-APACHE $R/usr/share/doc/ip-scanner-deluxe/LICENSE-APACHE
+          install -Dm644 THIRD-PARTY-NOTICES.txt $R/usr/share/doc/ip-scanner-deluxe/THIRD-PARTY-NOTICES.txt
           install -Dm755 packaging/linux/postinst $R/DEBIAN/postinst
           sed -e "s/@VERSION@/$VERSION/" -e "s/@ARCH@/${{ matrix.deb_arch }}/" packaging/linux/control > $R/DEBIAN/control
           dpkg-deb --root-owner-group --build $R dist/ip-scanner-deluxe_${VERSION}_${{ matrix.deb_arch }}.deb
@@ -182,15 +263,25 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [clippy, test, build-windows, build-linux, build-macos]
+    needs: [clippy, test, licenses, build-windows, build-msix, build-linux, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
+      # GitHub release assets only; the Store MSIX (msix-store-x64) goes to Partner Center.
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: IPScannerDeluxe-*
           merge-multiple: true
+      - name: Checksums
+        working-directory: artifacts
+        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: artifacts/*
       - uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*

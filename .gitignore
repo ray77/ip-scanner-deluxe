@@ -2,3 +2,13 @@
 /dist
 *.log
 .DS_Store
+
+# Signing material never belongs in the repository.
+*.pfx
+*.p12
+*.cer
+*.pvk
+*.snk
+*.key
+*.pem
+.env

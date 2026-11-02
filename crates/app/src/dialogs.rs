@@ -2,8 +2,9 @@
 //! viewports); small confirmations are modal overlays.
 
 use crate::app::{App, EditKind, OptionsTab};
+use crate::licenses::{self, LicenseDoc};
 use egui::{Context, RichText, Ui, ViewportBuilder, ViewportClass, ViewportId};
-use platform::launch::{default_template, ClientKind};
+use platform::launch::{default_template, open_url, ClientKind};
 use platform::power::ShutdownOptions;
 use scan_core::{ScanConfig, ScanProfile};
 use storage::{AppTheme, Language};
@@ -85,6 +86,22 @@ fn mono_box(ui: &mut Ui, pal: &ThemePalette, text: &str, height: f32) {
         |ui| {
             egui::ScrollArea::vertical().max_height(height).auto_shrink([false, false]).stick_to_bottom(true).show(ui, |ui| {
                 ui.add(egui::Label::new(RichText::new(text).monospace()).selectable(true));
+            });
+        },
+    );
+}
+
+/// Long read-only text (license texts): only the visible lines are laid out.
+fn text_viewer(ui: &mut Ui, pal: &ThemePalette, text: &str, height: f32) {
+    let lines: Vec<&str> = text.lines().collect();
+    let row_height = ui.text_style_height(&egui::TextStyle::Monospace);
+    egui::Frame::new().fill(pal.input_bg).stroke(egui::Stroke::new(1.0_f32, pal.input_border)).inner_margin(egui::Margin::same(6)).show(
+        ui,
+        |ui| {
+            egui::ScrollArea::both().max_height(height).auto_shrink([false, false]).show_rows(ui, row_height, lines.len(), |ui, rows| {
+                for line in &lines[rows] {
+                    ui.add(egui::Label::new(RichText::new(*line).monospace()).extend());
+                }
             });
         },
     );
@@ -392,7 +409,9 @@ impl App {
     fn info_windows(&mut self, ctx: &Context, pal: &ThemePalette, out: &mut Vec<UiCommand>) {
         if self.dialogs.about {
             let info = self.vendors.info().clone();
-            self.dialogs.about = window(ctx, "about", t("about.title"), [420.0, 260.0], pal, |ui, open| {
+            let mut show = None;
+            let mut url = None;
+            self.dialogs.about = window(ctx, "about", t("about.title"), [460.0, 360.0], pal, |ui, open| {
                 ui.horizontal(|ui| {
                     ui.add(egui::Image::new(&crate::app_icon_texture(ui.ctx())).fit_to_exact_size(egui::vec2(48.0, 48.0)));
                     ui.vertical(|ui| {
@@ -402,14 +421,62 @@ impl App {
                 });
                 ui.add_space(8.0);
                 ui.label(t("about.text"));
+                ui.add_space(8.0);
+                ui.label(licenses::COPYRIGHT);
+                ui.add_space(4.0);
+                ui.label(t("about.licensed"));
+                ui.horizontal(|ui| {
+                    if ui.link(LicenseDoc::Mit.title()).clicked() {
+                        show = Some(LicenseDoc::Mit);
+                    }
+                    ui.label(t("about.or"));
+                    if ui.link(LicenseDoc::Apache.title()).clicked() {
+                        show = Some(LicenseDoc::Apache);
+                    }
+                    ui.weak(format!("({})", licenses::LICENSE_EXPR));
+                });
+                ui.add_space(4.0);
+                ui.label(t("about.source"));
+                if ui.link(licenses::SOURCE_URL).clicked() {
+                    url = Some(licenses::SOURCE_URL);
+                }
                 ui.add_space(6.0);
                 ui.weak(t("about.oui"));
                 ui.weak(tf("about.macdb", &[("v", &info.version), ("n", &info.total().to_string())]));
+                if crate::STORE_BUILD {
+                    ui.weak(t("about.store_updates"));
+                }
                 ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    if ui.button(t("about.third_party")).clicked() {
+                        show = Some(LicenseDoc::ThirdParty);
+                    }
+                    if ui.button(t("dlg.close")).clicked() {
+                        *open = false;
+                    }
+                });
+            });
+            if show.is_some() {
+                self.dialogs.license = show;
+            }
+            if let Some(url) = url {
+                if let Err(e) = open_url(url) {
+                    self.toast(format!("{url}: {e}"), true);
+                }
+            }
+        }
+        if let Some(doc) = self.dialogs.license {
+            let title = if doc == LicenseDoc::ThirdParty { t("about.third_party") } else { doc.title() };
+            let open = window(ctx, "license", title, [640.0, 520.0], pal, |ui, open| {
                 if ui.button(t("dlg.close")).clicked() {
                     *open = false;
                 }
+                ui.add_space(4.0);
+                text_viewer(ui, pal, doc.text(), ui.available_height() - 14.0);
             });
+            if !open {
+                self.dialogs.license = None;
+            }
         }
         if let Some(text) = self.dialogs.diagnose.clone() {
             let mut copy = false;

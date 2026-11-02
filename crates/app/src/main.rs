@@ -5,12 +5,18 @@ mod app;
 mod commands;
 mod dialogs;
 mod export;
+mod licenses;
 mod screenshot;
 mod state;
 mod tools;
 
 use std::sync::Mutex;
 use storage::{AppPaths, AppSettings, Store};
+
+/// Microsoft Store / MSIX build (`--features store`): no portable mode, updates via the Store.
+pub const STORE_BUILD: bool = cfg!(feature = "store");
+/// Remote shutdown/restart can be compiled out of Store builds (`--features store-no-remote-shutdown`).
+pub const REMOTE_POWER: bool = !cfg!(feature = "store-no-remote-shutdown");
 
 const LOG_MAX_BYTES: u64 = 5 * 1024 * 1024;
 
@@ -56,12 +62,18 @@ pub fn app_icon_texture(ctx: &egui::Context) -> egui::TextureHandle {
 
 fn main() -> eframe::Result<()> {
     let cli = screenshot::parse_args();
-    let paths = AppPaths::detect();
+    let paths = AppPaths::detect(!STORE_BUILD);
     if let Err(e) = paths.ensure() {
         eprintln!("cannot create data directories: {e}");
     }
     init_logging(&paths);
-    tracing::info!("IP Scanner Deluxe {} starting ({} {})", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH);
+    tracing::info!(
+        "IP Scanner Deluxe {} starting ({} {}{})",
+        env!("CARGO_PKG_VERSION"),
+        std::env::consts::OS,
+        std::env::consts::ARCH,
+        if STORE_BUILD { ", Store build" } else { "" }
+    );
 
     let rt = match tokio::runtime::Builder::new_multi_thread().enable_all().thread_name("scan-worker").max_blocking_threads(512).build() {
         Ok(rt) => rt,

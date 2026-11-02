@@ -262,6 +262,11 @@ const STRINGS: &[(&str, &str, &str)] = &[
     ("diag.no", "nein", "no"),
     ("about.title", "Über IP Scanner Deluxe", "About IP Scanner Deluxe"),
     ("about.text", "Schneller, lokaler Netzwerkscanner für Windows, Linux und macOS.\nAlle Daten bleiben auf diesem Computer: keine Telemetrie, keine Cloud-Abfragen.", "Fast, local network scanner for Windows, Linux and macOS.\nAll data stays on this computer: no telemetry, no cloud lookups."),
+    ("about.licensed", "Lizenziert nach Wahl unter:", "Licensed under either of:"),
+    ("about.or", "oder", "or"),
+    ("about.source", "Quellcode:", "Source Code:"),
+    ("about.third_party", "Drittanbieter-Lizenzen", "Third-Party Licenses"),
+    ("about.store_updates", "Updates werden automatisch über den Microsoft Store bereitgestellt.", "Updates are delivered automatically through the Microsoft Store."),
     ("about.macdb", "MAC-DB: {v} ({n} Einträge)", "MAC DB: {v} ({n} entries)"),
     ("about.oui", "Herstellerdaten: IEEE Registration Authority (öffentliche Registrierungsdaten).", "Vendor data: IEEE Registration Authority (public registry data)."),
     // Details / properties

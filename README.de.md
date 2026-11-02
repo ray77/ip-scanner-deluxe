@@ -115,7 +115,11 @@ cargo xtask bundle-macos
 
 Installationspakete (ZIP, `.deb`, AppImage, `.app`, `.dmg`) baut die GitHub-Actions-CI
 (`.github/workflows/build.yml`); bei einem Tag `v*` werden sie als Release veröffentlicht.
-Die Paketierungsdateien liegen in `packaging/`.
+Die Paketierungsdateien liegen in `packaging/`. Jedes Release enthält `SHA256SUMS.txt` und
+GitHub-Herkunftsnachweise (`gh attestation verify <datei> --repo ray77/ip-scanner-deluxe`).
+
+**Microsoft Store**: Die Store-Version ist dasselbe Programm, gebaut mit `--features store` und
+als MSIX paketiert; siehe [docs/MICROSOFT_STORE.md](docs/MICROSOFT_STORE.md) (englisch).
 
 **Portabler Modus**: Liegt eine Datei `portable.flag` neben dem Programm, werden Einstellungen,
 Datenbank und Logs im Programmordner gespeichert. Sonst:
@@ -180,14 +184,16 @@ Für die Host-Erkennung bei gefiltertem ICMP werden zusätzlich 22, 80, 443, 445
 
 ## Lizenzhinweise
 
-Dieses Projekt steht unter **MIT OR Apache-2.0** (siehe `LICENSE-MIT`, `LICENSE-APACHE`).
+Copyright © 2026 Dominik Schmidt. Dieses Projekt steht nach Wahl unter **MIT OR Apache-2.0**
+(siehe `LICENSE-MIT`, `LICENSE-APACHE`).
 
 Die Herstellerdaten stammen aus den öffentlichen IEEE-Registration-Authority-Listen
 (MA-L, MA-M, MA-S). Die Namen und Adressen sind Eigentum der jeweiligen Registranten;
 IEEE übernimmt keine Gewähr für die Daten.
 
-Die verwendeten Rust-Bibliotheken (u. a. egui/eframe, tokio, redb, rustls, mdns-sd) stehen unter
-MIT-, Apache-2.0-, ISC- bzw. BSD-Lizenzen; die vollständige Liste liefert `Cargo.lock`.
+Lizenzen und Copyright-Hinweise aller einkompilierten Rust-Bibliotheken stehen in
+[`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt) (erzeugt mit cargo-about, auch unter
+Hilfe > Über > Drittanbieter-Lizenzen). `cargo deny check licenses` prüft neue Abhängigkeiten in der CI.
 
 Dieses Projekt ist ein eigenständiges Werk und steht in keiner Verbindung zu Famatech oder
 Advanced IP Scanner.

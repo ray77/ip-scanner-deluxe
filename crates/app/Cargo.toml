@@ -10,6 +10,13 @@ homepage.workspace = true
 keywords = ["ip-scanner", "network-scanner", "lan-scanner", "network", "scanner"]
 categories = ["network-programming", "gui"]
 
+[features]
+default = []
+# Microsoft Store / MSIX build: ignores portable.flag, updates come from the Store.
+store = []
+# Optional for Store builds: hide remote shutdown/restart should certification require it.
+store-no-remote-shutdown = ["store"]
+
 [[bin]]
 name = "IPScannerDeluxe"
 path = "src/main.rs"

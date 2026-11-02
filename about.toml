@@ -1,0 +1,29 @@
+# cargo-about configuration for THIRD-PARTY-NOTICES.txt.
+# Regenerate with: cargo xtask third-party-notices
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "BSL-1.0",
+    "Unlicense",
+    "Unicode-3.0",
+    "OFL-1.1",
+    "Ubuntu-font-1.0",
+    "MPL-2.0",
+]
+# Every shipped binary target; build-only and dev-only crates are not part of the program.
+targets = [
+    "x86_64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+]
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+workarounds = ["ring"]

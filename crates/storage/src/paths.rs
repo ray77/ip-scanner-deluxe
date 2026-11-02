@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 /// Platform specific locations, or the program directory in portable mode
-/// (`portable.flag` next to the executable).
+/// (`portable.flag` next to the executable, only if `allow_portable`).
 #[derive(Debug, Clone)]
 pub struct AppPaths {
     pub portable: bool,
@@ -12,8 +12,9 @@ pub struct AppPaths {
 }
 
 impl AppPaths {
-    pub fn detect() -> Self {
-        if let Some(dir) = std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf)) {
+    /// Store/MSIX builds pass `allow_portable = false`: the install directory is read-only there.
+    pub fn detect(allow_portable: bool) -> Self {
+        if let Some(dir) = std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf)).filter(|_| allow_portable) {
             if dir.join("portable.flag").exists() {
                 return Self::in_dir(&dir, true);
             }

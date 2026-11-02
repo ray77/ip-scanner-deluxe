@@ -148,6 +148,8 @@ pub fn column_chooser(ui: &mut Ui, visible: &[Column], out: &mut Vec<UiCommand>)
 
 pub struct ContextCaps {
     pub power_supported: bool,
+    /// False in Store builds compiled with `store-no-remote-shutdown`: the entries are hidden.
+    pub remote_power: bool,
 }
 
 /// Right-click menu for a device row. Only actions that make sense for the
@@ -244,18 +246,20 @@ pub fn host_context_menu(ui: &mut Ui, row: &HostRow, caps: &ContextCaps, out: &m
             out.push(UiCommand::WakeOnLan(ip));
             ui.close();
         }
-        let enabled = caps.power_supported && row.alive;
-        let sd = ui.add_enabled(enabled, egui::Button::new(t("ctx.shutdown")));
-        let sd = if caps.power_supported { sd } else { sd.on_disabled_hover_text(t("ctx.windows_only")) };
-        if sd.clicked() {
-            out.push(UiCommand::Shutdown(ip));
-            ui.close();
-        }
-        let rb = ui.add_enabled(enabled, egui::Button::new(t("ctx.reboot")));
-        let rb = if caps.power_supported { rb } else { rb.on_disabled_hover_text(t("ctx.windows_only")) };
-        if rb.clicked() {
-            out.push(UiCommand::Reboot(ip));
-            ui.close();
+        if caps.remote_power {
+            let enabled = caps.power_supported && row.alive;
+            let sd = ui.add_enabled(enabled, egui::Button::new(t("ctx.shutdown")));
+            let sd = if caps.power_supported { sd } else { sd.on_disabled_hover_text(t("ctx.windows_only")) };
+            if sd.clicked() {
+                out.push(UiCommand::Shutdown(ip));
+                ui.close();
+            }
+            let rb = ui.add_enabled(enabled, egui::Button::new(t("ctx.reboot")));
+            let rb = if caps.power_supported { rb } else { rb.on_disabled_hover_text(t("ctx.windows_only")) };
+            if rb.clicked() {
+                out.push(UiCommand::Reboot(ip));
+                ui.close();
+            }
         }
     });
     ui.separator();

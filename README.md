@@ -117,7 +117,11 @@ cargo xtask bundle-macos
 
 Installer packages (ZIP, `.deb`, AppImage, `.app`, `.dmg`) are built by GitHub Actions
 (`.github/workflows/build.yml`); pushing a `v*` tag publishes them as a release.
-Packaging files live in `packaging/`.
+Packaging files live in `packaging/`. Every release comes with `SHA256SUMS.txt` and GitHub
+build provenance attestations (`gh attestation verify <file> --repo ray77/ip-scanner-deluxe`).
+
+**Microsoft Store**: the Store version is the same program built with `--features store` and
+packaged as MSIX; see [docs/MICROSOFT_STORE.md](docs/MICROSOFT_STORE.md).
 
 **Portable mode**: if a file named `portable.flag` sits next to the program, settings,
 database and logs are stored in the program folder. Otherwise:
@@ -181,13 +185,15 @@ For host discovery when ICMP is filtered, ports 22, 80, 443, 445, 3389, 8080, 84
 
 ## License notes
 
-This project is licensed under **MIT OR Apache-2.0** (see `LICENSE-MIT`, `LICENSE-APACHE`).
+Copyright © 2026 Dominik Schmidt. This project is licensed under **MIT OR Apache-2.0**, at your
+option (see `LICENSE-MIT`, `LICENSE-APACHE`).
 
 Vendor data comes from the public IEEE Registration Authority lists (MA-L, MA-M, MA-S).
 Names and addresses belong to the respective registrants; IEEE makes no warranty about the data.
 
-The Rust libraries used (including egui/eframe, tokio, redb, rustls, mdns-sd) are licensed under
-MIT, Apache-2.0, ISC or BSD licenses; `Cargo.lock` lists them all.
+The licenses and copyright notices of all Rust libraries compiled into the program are in
+[`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt) (generated with cargo-about, also shown under
+Help > About > Third-Party Licenses). `cargo deny check licenses` guards new dependencies in CI.
 
 This project is an independent work and is not affiliated with Famatech or Advanced IP Scanner.
 

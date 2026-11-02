@@ -4,6 +4,7 @@
 //! cargo xtask import-oui <file.csv>...   build assets/vendor.redb from IEEE CSVs
 //! cargo xtask build-vendor-db            same, using assets/oui/{oui,mam,oui36}.csv
 //! cargo xtask bundle-macos [target]      release build -> dist/IP Scanner Deluxe.app (+ .zip)
+//! cargo xtask third-party-notices        regenerate THIRD-PARTY-NOTICES.txt (needs cargo-about)
 //! ```
 
 use anyhow::{bail, Context, Result};
@@ -119,6 +120,23 @@ fn bundle_macos(target: Option<&str>) -> Result<()> {
     Ok(())
 }
 
+/// THIRD-PARTY-NOTICES.txt from Cargo.lock via cargo-about (config: about.toml).
+fn third_party_notices() -> Result<()> {
+    let root = workspace_root();
+    run(Command::new(env!("CARGO")).current_dir(&root).args([
+        "about",
+        "generate",
+        "--frozen",
+        "--all-features",
+        "-m",
+        "crates/app/Cargo.toml",
+        "-o",
+        "THIRD-PARTY-NOTICES.txt",
+        "packaging/licenses/third-party-notices.hbs",
+    ]))
+    .context("cargo-about is required: cargo install cargo-about --locked")
+}
+
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -138,8 +156,9 @@ fn main() -> Result<()> {
             import(&files)
         }
         Some("bundle-macos") => bundle_macos(args.get(1).map(String::as_str)),
+        Some("third-party-notices") => third_party_notices(),
         _ => {
-            eprintln!("tasks:\n  import-oui <csv>...\n  build-vendor-db\n  bundle-macos [target]");
+            eprintln!("tasks:\n  import-oui <csv>...\n  build-vendor-db\n  bundle-macos [target]\n  third-party-notices");
             Ok(())
         }
     }

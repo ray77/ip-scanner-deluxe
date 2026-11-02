@@ -73,6 +73,7 @@ pub struct PowerDialog {
 pub struct Dialogs {
     pub options: Option<OptionsDialog>,
     pub about: bool,
+    pub license: Option<crate::licenses::LicenseDoc>,
     pub diagnose: Option<String>,
     pub macdb: bool,
     pub macdb_lookup: String,
@@ -214,6 +215,7 @@ impl App {
             Some("macdb") => app.dialogs.macdb = true,
             Some("fingerprints") => app.dialogs.fingerprints = true,
             Some("diagnose") => app.dialogs.diagnose = Some(app.diagnostics()),
+            Some("licenses") => app.dialogs.license = Some(crate::licenses::LicenseDoc::ThirdParty),
             _ => {}
         }
         if app.range_text.trim().is_empty() {
@@ -685,7 +687,7 @@ impl eframe::App for App {
                 if let Some(i) = ui::widgets::tabs(ui, &pal, &labels, self.tab) {
                     self.tab = i;
                 }
-                let caps = ContextCaps { power_supported: cfg!(windows) };
+                let caps = ContextCaps { power_supported: cfg!(windows), remote_power: crate::REMOTE_POWER };
                 let (rows, state, id) = if self.tab == 0 {
                     (&self.rows, &mut self.results_table, "results")
                 } else {
