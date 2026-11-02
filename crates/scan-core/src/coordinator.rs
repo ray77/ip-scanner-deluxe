@@ -2,7 +2,7 @@
 //! semaphores, supports pause/resume/cancel and streams results.
 
 use crate::discovery::{IcmpOutcome, NetProbe, TcpOutcome};
-use crate::events::ScanEvent;
+use crate::events::{ScanEvent, ScanWarning};
 use crate::model::{HostNames, HostRecord, HostStatus, ServiceRecord, ServiceType};
 use crate::ports::{self, service_for_port, ProbeKind};
 use crate::target::TargetSpec;
@@ -221,7 +221,7 @@ impl<P: NetProbe> Scanner<P> {
         let started = Instant::now();
         if ctx.cfg.resolve_mdns {
             if let Some(w) = ctx.probe.mdns_begin() {
-                ctx.send(ScanEvent::Warning(w));
+                ctx.send(ScanEvent::Warning(ScanWarning::MdnsUnavailable(w)));
             }
         }
 
@@ -398,7 +398,7 @@ async fn scan_host<P: NetProbe>(ctx: &Arc<Ctx<P>>, ip: IpAddr, known_alive: bool
         IcmpOutcome::NoReply => {}
         IcmpOutcome::Unavailable(_) => {
             if !ctx.icmp_warned.swap(true, Ordering::Relaxed) {
-                ctx.send(ScanEvent::Warning("ICMP Raw Socket nicht verfügbar. TCP-Erkennung wird als Fallback verwendet.".into()));
+                ctx.send(ScanEvent::Warning(ScanWarning::IcmpFallback));
             }
             if on_link {
                 // Give ARP time to complete before reading the cache.
@@ -513,7 +513,7 @@ async fn scan_host<P: NetProbe>(ctx: &Arc<Ctx<P>>, ip: IpAddr, known_alive: bool
     if nb.as_ref().is_some_and(|n| n.file_server) || open.contains(&445) || open.contains(&139) {
         let host = rec.names.netbios.clone().unwrap_or_else(|| ip.to_string());
         rec.services.push(
-            ServiceRecord::new(ServiceType::Shares, open.iter().find(|p| **p == 445 || **p == 139).copied(), "Freigaben")
+            ServiceRecord::new(ServiceType::Shares, open.iter().find(|p| **p == 445 || **p == 139).copied(), "Shares")
                 .with_uri(format!("\\\\{host}\\")),
         );
     }

@@ -7,14 +7,66 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 pub const MAX_TARGETS: u64 = 1 << 20;
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
-#[error("{message} ({token})")]
+#[error("{} ({token})", .kind.english())]
 pub struct RangeError {
     pub token: String,
-    pub message: String,
+    pub kind: RangeErrorKind,
 }
 
-fn err(token: &str, message: &str) -> RangeError {
-    RangeError { token: token.to_string(), message: message.to_string() }
+/// Why a range was rejected. The UI translates [`RangeErrorKind::key`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RangeErrorKind {
+    InvalidPrefix,
+    PrefixV4,
+    PrefixV6,
+    Ipv6TooLarge,
+    InvalidAddress,
+    InvalidStart,
+    InvalidEnd,
+    EndBeforeStart,
+    Invalid,
+    Empty,
+    TooLarge,
+}
+
+impl RangeErrorKind {
+    /// Translation key (`ui::i18n`).
+    pub fn key(self) -> &'static str {
+        match self {
+            Self::InvalidPrefix => "range.invalid_prefix",
+            Self::PrefixV4 => "range.prefix_v4",
+            Self::PrefixV6 => "range.prefix_v6",
+            Self::Ipv6TooLarge => "range.ipv6_too_large",
+            Self::InvalidAddress => "range.invalid_address",
+            Self::InvalidStart => "range.invalid_start",
+            Self::InvalidEnd => "range.invalid_end",
+            Self::EndBeforeStart => "range.end_before_start",
+            Self::Invalid => "range.invalid",
+            Self::Empty => "range.empty",
+            Self::TooLarge => "range.too_large",
+        }
+    }
+
+    /// English text for logs.
+    pub fn english(self) -> &'static str {
+        match self {
+            Self::InvalidPrefix => "Invalid prefix length",
+            Self::PrefixV4 => "Prefix must be 0-32",
+            Self::PrefixV6 => "Prefix must be 0-128",
+            Self::Ipv6TooLarge => "IPv6 networks larger than /120 are not scanned",
+            Self::InvalidAddress => "Invalid address",
+            Self::InvalidStart => "Invalid start address",
+            Self::InvalidEnd => "Invalid end address",
+            Self::EndBeforeStart => "End address is before start address",
+            Self::Invalid => "Invalid IP address or range",
+            Self::Empty => "No address range given",
+            Self::TooLarge => "Range too large (max. 1,048,576 addresses)",
+        }
+    }
+}
+
+fn err(token: &str, kind: RangeErrorKind) -> RangeError {
+    RangeError { token: token.to_string(), kind }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -87,10 +139,10 @@ fn parse_v4(s: &str) -> Option<Ipv4Addr> {
 fn parse_token(tok: &str) -> Result<TargetRange, RangeError> {
     // CIDR
     if let Some((addr, prefix)) = tok.split_once('/') {
-        let prefix: u32 = prefix.parse().map_err(|_| err(tok, "Ungültige Präfixlänge"))?;
+        let prefix: u32 = prefix.parse().map_err(|_| err(tok, RangeErrorKind::InvalidPrefix))?;
         if let Some(v4) = parse_v4(addr) {
             if prefix > 32 {
-                return Err(err(tok, "Präfix muss 0-32 sein"));
+                return Err(err(tok, RangeErrorKind::PrefixV4));
             }
             let mask = if prefix == 0 { 0 } else { u32::MAX << (32 - prefix) };
             let net = u32::from(v4) & mask;
@@ -101,30 +153,30 @@ fn parse_token(tok: &str) -> Result<TargetRange, RangeError> {
         }
         if let Ok(v6) = addr.parse::<Ipv6Addr>() {
             if prefix > 128 {
-                return Err(err(tok, "Präfix muss 0-128 sein"));
+                return Err(err(tok, RangeErrorKind::PrefixV6));
             }
             if prefix < 120 {
-                return Err(err(tok, "IPv6-Netze größer als /120 werden nicht durchsucht"));
+                return Err(err(tok, RangeErrorKind::Ipv6TooLarge));
             }
             let mask = u128::MAX << (128 - prefix);
             let net = u128::from(v6) & mask;
             return Ok(TargetRange::V6 { start: net, end: net | !mask });
         }
-        return Err(err(tok, "Ungültige Adresse"));
+        return Err(err(tok, RangeErrorKind::InvalidAddress));
     }
     // Ranges: a.b.c.d-e or a.b.c.d-w.x.y.z
     if let Some((a, b)) = tok.split_once('-') {
-        let start = parse_v4(a).ok_or_else(|| err(tok, "Ungültige Startadresse"))?;
+        let start = parse_v4(a).ok_or_else(|| err(tok, RangeErrorKind::InvalidStart))?;
         let end = if let Some(full) = parse_v4(b) {
             full
         } else {
-            let last: u8 = b.parse().map_err(|_| err(tok, "Ungültige Endadresse"))?;
+            let last: u8 = b.parse().map_err(|_| err(tok, RangeErrorKind::InvalidEnd))?;
             let o = start.octets();
             Ipv4Addr::new(o[0], o[1], o[2], last)
         };
         let (s, e) = (u32::from(start), u32::from(end));
         if e < s {
-            return Err(err(tok, "Endadresse liegt vor der Startadresse"));
+            return Err(err(tok, RangeErrorKind::EndBeforeStart));
         }
         return Ok(TargetRange::V4 { start: s, end: e });
     }
@@ -136,14 +188,14 @@ fn parse_token(tok: &str) -> Result<TargetRange, RangeError> {
         let v = u128::from(v6);
         return Ok(TargetRange::V6 { start: v, end: v });
     }
-    Err(err(tok, "Ungültige IP-Adresse oder ungültiger Bereich"))
+    Err(err(tok, RangeErrorKind::Invalid))
 }
 
 /// Parse user input such as `192.168.0.1-254, 10.0.0.0/24; 10.0.1.5`.
 pub fn parse_targets(input: &str) -> Result<TargetSpec, RangeError> {
     let tokens: Vec<&str> = input.split([',', ';', ' ', '\t', '\n']).map(str::trim).filter(|t| !t.is_empty()).collect();
     if tokens.is_empty() {
-        return Err(err(input, "Kein Adressbereich angegeben"));
+        return Err(err(input, RangeErrorKind::Empty));
     }
     let mut spec = TargetSpec::default();
     for t in tokens {
@@ -151,7 +203,7 @@ pub fn parse_targets(input: &str) -> Result<TargetSpec, RangeError> {
         spec.ranges.push(parse_token(t)?);
     }
     if spec.len() > MAX_TARGETS {
-        return Err(err(input, "Bereich zu groß (max. 1.048.576 Adressen)"));
+        return Err(err(input, RangeErrorKind::TooLarge));
     }
     Ok(spec)
 }

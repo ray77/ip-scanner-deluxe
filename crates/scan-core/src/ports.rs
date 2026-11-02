@@ -36,21 +36,50 @@ pub fn accurate_ports() -> Vec<u16> {
     v
 }
 
+/// Rejected entry of a user port list; the UI translates [`PortError::key`].
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum PortError {
+    #[error("Invalid port: {0}")]
+    Invalid(String),
+    #[error("Invalid port range: {0}")]
+    InvalidRange(String),
+    #[error("Port 0 is invalid")]
+    Zero,
+}
+
+impl PortError {
+    /// Translation key (`ui::i18n`); the offending entry is `{t}`.
+    pub fn key(&self) -> &'static str {
+        match self {
+            Self::Invalid(_) => "ports.invalid",
+            Self::InvalidRange(_) => "ports.invalid_range",
+            Self::Zero => "ports.zero",
+        }
+    }
+
+    pub fn token(&self) -> &str {
+        match self {
+            Self::Invalid(t) | Self::InvalidRange(t) => t,
+            Self::Zero => "0",
+        }
+    }
+}
+
 /// Parse a user port list like `22, 80, 8000-8010`.
-pub fn parse_port_list(s: &str) -> Result<Vec<u16>, String> {
+pub fn parse_port_list(s: &str) -> Result<Vec<u16>, PortError> {
     let mut out = Vec::new();
     for tok in s.split([',', ';', ' ']).map(str::trim).filter(|t| !t.is_empty()) {
         if let Some((a, b)) = tok.split_once('-') {
-            let a: u16 = a.trim().parse().map_err(|_| format!("Ungültiger Port: {tok}"))?;
-            let b: u16 = b.trim().parse().map_err(|_| format!("Ungültiger Port: {tok}"))?;
+            let a: u16 = a.trim().parse().map_err(|_| PortError::Invalid(tok.into()))?;
+            let b: u16 = b.trim().parse().map_err(|_| PortError::Invalid(tok.into()))?;
             if a == 0 || b < a || (b - a) > 4096 {
-                return Err(format!("Ungültiger Portbereich: {tok}"));
+                return Err(PortError::InvalidRange(tok.into()));
             }
             out.extend(a..=b);
         } else {
-            let p: u16 = tok.parse().map_err(|_| format!("Ungültiger Port: {tok}"))?;
+            let p: u16 = tok.parse().map_err(|_| PortError::Invalid(tok.into()))?;
             if p == 0 {
-                return Err("Port 0 ist ungültig".into());
+                return Err(PortError::Zero);
             }
             out.push(p);
         }

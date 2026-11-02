@@ -280,7 +280,11 @@ impl App {
     }
 
     pub fn validate_range(&mut self) {
-        self.range_error = if self.range_text.trim().is_empty() { None } else { parse_targets(&self.range_text).err().map(|e| e.message) };
+        self.range_error = if self.range_text.trim().is_empty() {
+            None
+        } else {
+            parse_targets(&self.range_text).err().map(|e| t(e.kind.key()).to_string())
+        };
     }
 
     pub fn is_scanning(&self) -> bool {
@@ -317,8 +321,9 @@ impl App {
         let spec = match parse_targets(&range) {
             Ok(s) => s,
             Err(e) => {
-                self.range_error = Some(e.message.clone());
-                self.toast(format!("{}: {}", t("err.range"), e.message), true);
+                let msg = t(e.kind.key());
+                self.range_error = Some(msg.to_string());
+                self.toast(format!("{}: {msg}", t("err.range")), true);
                 return;
             }
         };
@@ -417,6 +422,7 @@ impl App {
                 }
                 ScanEvent::ScanPaused | ScanEvent::ScanResumed => {}
                 ScanEvent::Warning(w) => {
+                    let w = tf(w.key(), &[("e", w.detail())]);
                     if !self.warnings.contains(&w) {
                         tracing::warn!("{w}");
                         self.warnings.push(w);

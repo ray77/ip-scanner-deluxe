@@ -26,7 +26,7 @@ pub fn class_label(h: &HostRecord) -> String {
 }
 
 /// Display text of a service node; the SMB shares node follows the UI language.
-fn service_label(s: &scan_core::ServiceRecord) -> String {
+pub(crate) fn service_label(s: &scan_core::ServiceRecord) -> String {
     if s.service_type == ServiceType::Shares {
         t("svc.shares").to_string()
     } else {

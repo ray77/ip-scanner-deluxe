@@ -179,6 +179,7 @@ const STRINGS: &[(&str, &str, &str)] = &[
     ("power.force", "Anwendungen ohne Nachfrage schließen", "Force applications to close"),
     ("power.done", "Befehl an {host} gesendet.", "Command sent to {host}."),
     ("power.failed", "Fehlgeschlagen: {e}", "Failed: {e}"),
+    ("power.unsupported", "Remote-Shutdown ist nur unter Windows verfügbar", "Remote shutdown is only available on Windows"),
     // Options
     ("opt.title", "Optionen", "Options"),
     ("opt.tab_perf", "Leistung", "Performance"),
@@ -272,6 +273,24 @@ const STRINGS: &[(&str, &str, &str)] = &[
     ("unknown", "unbekannt", "unknown"),
     ("not_implemented", "Noch nicht implementiert", "Not implemented yet"),
     ("err.range", "Ungültiger Bereich", "Invalid range"),
+    ("err.not_found", "{p} nicht gefunden", "{p} not found"),
+    ("err.no_favorites", "Keine Favoritenliste", "Not a favorites list"),
+    ("err.no_entries", "Keine Einträge gefunden", "No entries found"),
+    ("range.invalid_prefix", "Ungültige Präfixlänge", "Invalid prefix length"),
+    ("range.prefix_v4", "Präfix muss 0-32 sein", "Prefix must be 0-32"),
+    ("range.prefix_v6", "Präfix muss 0-128 sein", "Prefix must be 0-128"),
+    ("range.ipv6_too_large", "IPv6-Netze größer als /120 werden nicht durchsucht", "IPv6 networks larger than /120 are not scanned"),
+    ("range.invalid_address", "Ungültige Adresse", "Invalid address"),
+    ("range.invalid_start", "Ungültige Startadresse", "Invalid start address"),
+    ("range.invalid_end", "Ungültige Endadresse", "Invalid end address"),
+    ("range.end_before_start", "Endadresse liegt vor der Startadresse", "End address is before start address"),
+    ("range.invalid", "Ungültige IP-Adresse oder ungültiger Bereich", "Invalid IP address or range"),
+    ("range.empty", "Kein Adressbereich angegeben", "No address range given"),
+    ("range.too_large", "Bereich zu groß (max. 1.048.576 Adressen)", "Range too large (max. 1,048,576 addresses)"),
+    ("ports.invalid", "Ungültiger Port: {t}", "Invalid port: {t}"),
+    ("ports.invalid_range", "Ungültiger Portbereich: {t}", "Invalid port range: {t}"),
+    ("ports.zero", "Port 0 ist ungültig", "Port 0 is invalid"),
+    ("warn.mdns", "mDNS nicht verfügbar: {e}", "mDNS not available: {e}"),
     ("err.export", "Export fehlgeschlagen: {e}", "Export failed: {e}"),
     ("err.load", "Laden fehlgeschlagen: {e}", "Loading failed: {e}"),
     ("msg.exported", "Gespeichert: {p}", "Saved: {p}"),
@@ -318,6 +337,33 @@ mod tests {
         let mut seen = std::collections::HashSet::new();
         for (k, _, _) in STRINGS {
             assert!(seen.insert(*k), "duplicate key {k}");
+        }
+    }
+
+    #[test]
+    fn core_error_keys_exist() {
+        use scan_core::ports::PortError;
+        use scan_core::{RangeErrorKind as R, ScanWarning};
+        let range = [
+            R::InvalidPrefix,
+            R::PrefixV4,
+            R::PrefixV6,
+            R::Ipv6TooLarge,
+            R::InvalidAddress,
+            R::InvalidStart,
+            R::InvalidEnd,
+            R::EndBeforeStart,
+            R::Invalid,
+            R::Empty,
+            R::TooLarge,
+        ];
+        let keys = range
+            .iter()
+            .map(|k| k.key())
+            .chain([PortError::Invalid(String::new()).key(), PortError::InvalidRange(String::new()).key(), PortError::Zero.key()])
+            .chain([ScanWarning::IcmpFallback.key(), ScanWarning::MdnsUnavailable(String::new()).key()]);
+        for k in keys {
+            assert!(STRINGS.iter().any(|(key, _, _)| *key == k), "missing translation {k}");
         }
     }
 

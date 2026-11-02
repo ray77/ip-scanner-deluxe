@@ -10,9 +10,9 @@ pub mod target;
 
 pub use coordinator::{ScanConfig, ScanControl, ScanProfile, Scanner};
 pub use discovery::{NetProbe, SystemProbe, TcpOutcome};
-pub use events::ScanEvent;
+pub use events::{ScanEvent, ScanWarning};
 pub use model::{HostNames, HostRecord, HostStatus, ServiceRecord, ServiceType, TransportProtocol};
-pub use target::{class_c_range, parse_targets, RangeError, TargetSpec};
+pub use target::{class_c_range, parse_targets, RangeError, RangeErrorKind, TargetSpec};
 
 pub use fingerprint::DeviceClass;
 pub use vendor_db::MacAddr;

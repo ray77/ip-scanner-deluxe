@@ -40,7 +40,7 @@ fn run(target: String, options: ShutdownOptions, reboot: bool) -> io::Result<()>
     }
     #[cfg(not(windows))]
     {
-        Err(io::Error::new(io::ErrorKind::Unsupported, "Remote-Shutdown ist nur unter Windows verfügbar"))
+        Err(io::Error::new(io::ErrorKind::Unsupported, "remote shutdown is only available on Windows"))
     }
 }
 

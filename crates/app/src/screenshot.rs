@@ -57,7 +57,7 @@ pub fn demo_hosts() -> Vec<scan_core::HostRecord> {
     router.fingerprint_confidence = 96;
     router.services.push(ServiceRecord::new(ServiceType::Http, Some(80), "HTTP, FRITZ!Box").with_uri("http://192.168.0.90/"));
     let mut pc = mk("192.168.0.96", "PC01", "Hewlett Packard", "48:0F:CF:5A:21:0C", DeviceClass::Desktop);
-    pc.services.push(ServiceRecord::new(ServiceType::Shares, Some(445), "Freigaben"));
+    pc.services.push(ServiceRecord::new(ServiceType::Shares, Some(445), "Shares"));
     let mut sw = mk("192.168.0.102", "Switch", "Hewlett Packard", "CC:3E:5F:4D:91:80", DeviceClass::Switch);
     sw.services.push(ServiceRecord::new(ServiceType::Http, Some(80), "HTTP, HP 1820-24G Switch J9980A"));
     sw.services.push(ServiceRecord::new(ServiceType::Ssh, Some(22), "SSH"));
@@ -71,7 +71,7 @@ pub fn demo_hosts() -> Vec<scan_core::HostRecord> {
         (ServiceType::Https, 443, "HTTPS, IIS Windows Server"),
         (ServiceType::Ftp, 21, "FTP, Microsoft FTP Service"),
         (ServiceType::Rdp, 3389, "RDP"),
-        (ServiceType::Shares, 445, "Freigaben"),
+        (ServiceType::Shares, 445, "Shares"),
     ] {
         pat.services.push(ServiceRecord::new(t, Some(p), n));
     }

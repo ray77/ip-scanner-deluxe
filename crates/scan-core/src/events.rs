@@ -24,5 +24,31 @@ pub enum ScanEvent {
     ScanResumed,
     ScanFinished,
     ScanCancelled,
-    Warning(String),
+    Warning(ScanWarning),
+}
+
+/// Non-fatal problem during a scan; the UI translates [`ScanWarning::key`].
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum ScanWarning {
+    #[error("ICMP raw socket not available, falling back to TCP detection")]
+    IcmpFallback,
+    #[error("mDNS not available: {0}")]
+    MdnsUnavailable(String),
+}
+
+impl ScanWarning {
+    /// Translation key (`ui::i18n`); details are `{e}`.
+    pub fn key(&self) -> &'static str {
+        match self {
+            Self::IcmpFallback => "diag.icmp_fallback",
+            Self::MdnsUnavailable(_) => "warn.mdns",
+        }
+    }
+
+    pub fn detail(&self) -> &str {
+        match self {
+            Self::IcmpFallback => "",
+            Self::MdnsUnavailable(e) => e,
+        }
+    }
 }

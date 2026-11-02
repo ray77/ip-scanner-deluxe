@@ -314,6 +314,7 @@ impl App {
             let r = if reboot { p.reboot(&target, opts).await } else { p.shutdown(&target, opts).await };
             let m = match r {
                 Ok(()) => (tf("power.done", &[("host", &target)]), false),
+                Err(e) if e.kind() == std::io::ErrorKind::Unsupported => (t("power.unsupported").to_string(), true),
                 Err(e) => (tf("power.failed", &[("e", &e.to_string())]), true),
             };
             msgs.lock().push(m);
@@ -489,7 +490,7 @@ impl App {
 
 pub fn open_path(p: &std::path::Path) -> Result<(), String> {
     if !p.exists() {
-        return Err(format!("{} nicht gefunden", p.display()));
+        return Err(tf("err.not_found", &[("p", &p.display().to_string())]));
     }
     open::that_detached(p).map_err(|e| e.to_string())
 }

@@ -83,13 +83,13 @@ fn instance_name(fullname: &str, ty_domain: &str) -> String {
 
 impl MdnsBrowser {
     /// Start browsing. Failure to open multicast sockets (e.g. sandbox, no
-    /// interface) yields an inert browser and an error message.
+    /// interface) yields an inert browser and the error text.
     pub fn start(service_types: &[&str]) -> (Self, Option<String>) {
         let state = Arc::new(Mutex::new(BrowserState::default()));
         let running = Arc::new(AtomicBool::new(true));
         let daemon = match ServiceDaemon::new() {
             Ok(d) => d,
-            Err(e) => return (MdnsBrowser { daemon: None, state, running }, Some(format!("mDNS nicht verfügbar: {e}"))),
+            Err(e) => return (MdnsBrowser { daemon: None, state, running }, Some(e.to_string())),
         };
         for ty in service_types {
             let full = format!("{}.local.", ty.trim_end_matches('.'));

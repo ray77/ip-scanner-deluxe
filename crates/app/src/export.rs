@@ -58,7 +58,7 @@ pub fn to_row(h: &HostRecord, name: &str) -> ExportRow {
         model: h.model.clone().unwrap_or_default(),
         confidence: if h.fingerprint_confidence > 0 { h.fingerprint_confidence.to_string() } else { String::new() },
         latency: h.latency_ms.map(|l| format!("{l:.1}")).unwrap_or_default(),
-        services: h.services.iter().map(|s| s.display_name.clone()).collect::<Vec<_>>().join("; "),
+        services: h.services.iter().map(crate::state::service_label).collect::<Vec<_>>().join("; "),
         comment: h.comment.clone(),
         last_seen: fmt_time(h.last_seen),
     }
@@ -208,7 +208,7 @@ pub fn favorites_to_xml(favs: &[FavoriteDevice]) -> String {
 pub fn favorites_from_xml(xml: &str) -> Result<Vec<FavoriteDevice>> {
     let devs = elements(xml, "device");
     if devs.is_empty() && !xml.contains("<favorites") {
-        bail!("keine Favoritenliste");
+        bail!(ui::i18n::t("err.no_favorites"));
     }
     Ok(devs
         .into_iter()
@@ -276,7 +276,7 @@ pub fn load_list(path: &Path) -> Result<Vec<HostRecord>> {
         }
     }
     if out.is_empty() {
-        bail!("keine Einträge gefunden");
+        bail!(ui::i18n::t("err.no_entries"));
     }
     Ok(out)
 }

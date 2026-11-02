@@ -205,7 +205,8 @@ impl App {
                                 egui::TextEdit::singleline(&mut d.custom_ports).desired_width(320.0).hint_text("22, 80, 443, 8000-8100"),
                             );
                             if r.changed() {
-                                dlg.ports_error = scan_core::ports::parse_port_list(&d.custom_ports).err();
+                                dlg.ports_error =
+                                    scan_core::ports::parse_port_list(&d.custom_ports).err().map(|e| tf(e.key(), &[("t", e.token())]));
                             }
                         } else {
                             let ports = match d.scan.profile {
