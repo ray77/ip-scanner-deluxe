@@ -221,7 +221,9 @@ Privacy policy: [PRIVACY.md](../PRIVACY.md), URL
 ## Release process
 
 1. Bump `version` in `Cargo.toml`, update `Cargo.lock` (`cargo check`).
-2. If dependencies changed: `cargo xtask third-party-notices`, commit.
+2. Run `cargo xtask third-party-notices` and commit the result (the notices
+   list the workspace crates with their version, so every version bump
+   changes the file; CI fails otherwise).
 3. Tag `vX.Y.Z` and push. CI builds all packages, the MSIX, checksums and
    attestations, and creates the GitHub release (English release notes).
 4. Download the `msix-store-x64` artifact from the tag's workflow run
