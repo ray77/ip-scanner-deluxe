@@ -213,6 +213,7 @@ impl App {
             Some("options") => app.open_options(OptionsTab::Scan),
             Some("macdb") => app.dialogs.macdb = true,
             Some("fingerprints") => app.dialogs.fingerprints = true,
+            Some("diagnose") => app.dialogs.diagnose = Some(app.diagnostics()),
             _ => {}
         }
         if app.range_text.trim().is_empty() {
@@ -222,7 +223,7 @@ impl App {
         }
         app.validate_range();
         if !platform::icmp::capability().is_available() {
-            app.warnings.push("ICMP Raw Socket nicht verfügbar. TCP-Erkennung wird als Fallback verwendet.".into());
+            app.warnings.push(t("diag.icmp_fallback").into());
         }
         app
     }

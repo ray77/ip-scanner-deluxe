@@ -41,6 +41,19 @@ pub fn app_icon() -> std::sync::Arc<egui::IconData> {
     .clone()
 }
 
+/// The application icon as a texture (uploaded once per context), for the About dialog.
+pub fn app_icon_texture(ctx: &egui::Context) -> egui::TextureHandle {
+    let id = egui::Id::new("app_icon_texture");
+    if let Some(tex) = ctx.data(|d| d.get_temp::<egui::TextureHandle>(id)) {
+        return tex;
+    }
+    let icon = app_icon();
+    let image = egui::ColorImage::from_rgba_unmultiplied([icon.width as usize, icon.height as usize], &icon.rgba);
+    let tex = ctx.load_texture("app_icon", image, egui::TextureOptions::LINEAR);
+    ctx.data_mut(|d| d.insert_temp(id, tex.clone()));
+    tex
+}
+
 fn main() -> eframe::Result<()> {
     let cli = screenshot::parse_args();
     let paths = AppPaths::detect();

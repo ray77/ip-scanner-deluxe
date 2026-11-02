@@ -402,15 +402,17 @@ impl App {
     }
 
     pub fn diagnostics(&self) -> String {
+        let yes_no = |b: bool| t(if b { "diag.yes" } else { "diag.no" });
+        let line = |key: &str, v: &str| format!("{}\n", tf(key, &[("v", v)]));
         let mut s = String::new();
         let ifaces = platform::interfaces::list_interfaces();
-        s.push_str(&format!("App-Version: {}\n", env!("CARGO_PKG_VERSION")));
-        s.push_str(&format!("Rust-Version (Build): {}\n", env!("IPSD_RUSTC_VERSION")));
-        s.push_str(&format!("Betriebssystem: {}\n", platform::os_description()));
-        s.push_str(&format!("Architektur: {}\n", platform::arch()));
-        s.push_str(&format!("Portabler Modus: {}\n", if self.paths.portable { "ja" } else { "nein" }));
-        s.push_str(&format!("Datenverzeichnis: {}\n", self.paths.database_dir.display()));
-        s.push_str("\nAktive Interfaces:\n");
+        s.push_str(&line("diag.app_version", env!("CARGO_PKG_VERSION")));
+        s.push_str(&line("diag.rust", env!("IPSD_RUSTC_VERSION")));
+        s.push_str(&line("diag.os", &platform::os_description()));
+        s.push_str(&line("diag.arch", platform::arch()));
+        s.push_str(&line("diag.portable", yes_no(self.paths.portable)));
+        s.push_str(&line("diag.datadir", &self.paths.database_dir.display().to_string()));
+        s.push_str(&format!("\n{}\n", t("diag.ifaces")));
         for i in ifaces.iter().filter(|i| i.is_up && (!i.ipv4.is_empty() || !i.ipv6.is_empty())) {
             s.push_str(&format!(
                 "  {} ({}) {:?}{}\n",
@@ -433,27 +435,25 @@ impl App {
             }
         }
         let cap = platform::icmp::capability();
-        s.push_str(&format!(
-            "\nICMP verfügbar: {}\n",
-            match &cap {
-                platform::IcmpCapability::Unprivileged => "ja (ohne Privilegien)".to_string(),
-                platform::IcmpCapability::Raw => "ja (Raw Socket)".to_string(),
-                platform::IcmpCapability::Unavailable(e) => format!("nein ({e})"),
-            }
-        ));
-        s.push_str(&format!("Raw Socket verfügbar: {}\n", if platform::icmp::raw_socket_available() { "ja" } else { "nein" }));
-        let nt = platform::neighbor::neighbor_table();
-        s.push_str(&format!(
-            "Neighbor-Tabelle: {}\n",
-            match nt {
-                Ok(t) => format!("{} Einträge", t.len()),
-                Err(e) => format!("nicht lesbar ({e})"),
-            }
-        ));
+        let icmp = match &cap {
+            platform::IcmpCapability::Unprivileged => t("diag.icmp_unpriv").to_string(),
+            platform::IcmpCapability::Raw => t("diag.icmp_raw").to_string(),
+            platform::IcmpCapability::Unavailable(e) => tf("diag.icmp_no", &[("e", &e.to_string())]),
+        };
+        s.push('\n');
+        s.push_str(&line("diag.icmp", &icmp));
+        s.push_str(&line("diag.raw", yes_no(platform::icmp::raw_socket_available())));
+        let neighbors = match platform::neighbor::neighbor_table() {
+            Ok(t) => tf("diag.entries", &[("n", &t.len().to_string())]),
+            Err(e) => tf("diag.unreadable", &[("e", &e.to_string())]),
+        };
+        s.push_str(&line("diag.neighbors", &neighbors));
         let info = self.vendors.info();
-        s.push_str(&format!("\nMAC-DB Version: {} ({})\n", info.version, self.vendor_source));
-        s.push_str(&format!("OUI-Einträge: {} (MA-L {}, MA-M {}, MA-S {})\n", info.total(), info.ma_l, info.ma_m, info.ma_s));
-        s.push_str(&format!("Fingerprint-Regeln: {}\n", self.engine.rule_count()));
+        s.push('\n');
+        s.push_str(&format!("{}\n", tf("diag.macdb", &[("v", &info.version), ("s", &self.vendor_source)])));
+        let (n, l, m, ms) = (info.total().to_string(), info.ma_l.to_string(), info.ma_m.to_string(), info.ma_s.to_string());
+        s.push_str(&format!("{}\n", tf("diag.oui", &[("n", &n), ("l", &l), ("m", &m), ("s", &ms)])));
+        s.push_str(&format!("{}\n", tf("diag.rules", &[("n", &self.engine.rule_count().to_string())])));
         s
     }
 

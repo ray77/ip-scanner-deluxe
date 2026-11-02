@@ -393,8 +393,7 @@ impl App {
             let info = self.vendors.info().clone();
             self.dialogs.about = window(ctx, "about", t("about.title"), [420.0, 260.0], pal, |ui, open| {
                 ui.horizontal(|ui| {
-                    let (r, _) = ui.allocate_exact_size(egui::vec2(48.0, 48.0), egui::Sense::hover());
-                    ui::icons::computer(ui.painter(), r, pal, false);
+                    ui.add(egui::Image::new(&crate::app_icon_texture(ui.ctx())).fit_to_exact_size(egui::vec2(48.0, 48.0)));
                     ui.vertical(|ui| {
                         ui.heading(t("app.title"));
                         ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
@@ -404,7 +403,7 @@ impl App {
                 ui.label(t("about.text"));
                 ui.add_space(6.0);
                 ui.weak(t("about.oui"));
-                ui.weak(format!("MAC-DB: {} ({} Einträge)", info.version, info.total()));
+                ui.weak(tf("about.macdb", &[("v", &info.version), ("n", &info.total().to_string())]));
                 ui.add_space(8.0);
                 if ui.button(t("dlg.close")).clicked() {
                     *open = false;
@@ -415,7 +414,7 @@ impl App {
             let mut copy = false;
             let open = window(ctx, "diagnose", t("diag.title"), [560.0, 460.0], pal, |ui, open| {
                 ui.horizontal(|ui| {
-                    if ui.button("Diagnose in Zwischenablage kopieren").clicked() {
+                    if ui.button(t("diag.copy")).clicked() {
                         copy = true;
                     }
                     if ui.button(t("dlg.close")).clicked() {
