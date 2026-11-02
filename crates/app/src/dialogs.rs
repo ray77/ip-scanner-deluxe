@@ -15,11 +15,26 @@ use ui::UiCommand;
 fn window(ctx: &Context, id: &str, title: &str, size: [f32; 2], pal: &ThemePalette, mut content: impl FnMut(&mut Ui, &mut bool)) -> bool {
     let mut open = true;
     let vid = ViewportId::from_hash_of(id);
-    let builder = ViewportBuilder::default().with_title(title).with_inner_size(size).with_min_inner_size([300.0, 160.0]);
+    let mut builder =
+        ViewportBuilder::default().with_title(title).with_icon(crate::app_icon()).with_inner_size(size).with_min_inner_size([300.0, 160.0]);
+    let place = placement(ctx, id, size);
+    if let Some(pos) = place.pos {
+        builder = builder.with_position(pos);
+    }
     ctx.show_viewport_immediate(vid, builder, |ctx, class| {
+        // Bring a freshly opened dialog to the front of the main window.
+        if place.last.saturating_sub(place.opened) < 3 {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        }
         if class == ViewportClass::Embedded {
             let mut win_open = true;
-            egui::Window::new(title).id(egui::Id::new(id)).open(&mut win_open).default_size(size).show(ctx, |ui| content(ui, &mut open));
+            egui::Window::new(title)
+                .id(egui::Id::new(id))
+                .open(&mut win_open)
+                .default_size(size)
+                .pivot(egui::Align2::CENTER_CENTER)
+                .default_pos(ctx.content_rect().center())
+                .show(ctx, |ui| content(ui, &mut open));
             if !win_open {
                 open = false;
             }
@@ -33,6 +48,35 @@ fn window(ctx: &Context, id: &str, title: &str, size: [f32; 2], pal: &ThemePalet
         }
     });
     open
+}
+
+/// Placement state of an open dialog: screen position that centers it on the
+/// main window, the pass it opened in and the pass it was last shown in.
+/// Kept while the dialog stays open, so the user can move it and it does not
+/// follow later main-window moves.
+#[derive(Clone, Copy)]
+struct Placement {
+    pos: Option<egui::Pos2>,
+    opened: u64,
+    last: u64,
+}
+
+fn placement(ctx: &Context, id: &str, size: [f32; 2]) -> Placement {
+    // Approximate native title bar height, so the whole window is centered.
+    const TITLE_BAR: f32 = 28.0;
+    let key = egui::Id::new(id).with("placement");
+    let pass = ctx.cumulative_pass_nr();
+    let mut p = ctx.data(|d| d.get_temp::<Placement>(key)).filter(|p| p.last + 1 >= pass).unwrap_or(Placement {
+        pos: None,
+        opened: pass,
+        last: pass,
+    });
+    if p.pos.is_none() {
+        p.pos = ctx.input(|i| i.viewport().outer_rect).map(|main| main.center() - egui::vec2(size[0], size[1] + TITLE_BAR) / 2.0);
+    }
+    p.last = pass;
+    ctx.data_mut(|d| d.insert_temp(key, p));
+    p
 }
 
 fn mono_box(ui: &mut Ui, pal: &ThemePalette, text: &str, height: f32) {
@@ -432,7 +476,7 @@ impl App {
             });
             self.dialogs.macdb_lookup = new_lookup;
             if import {
-                self.import_oui();
+                out.push(UiCommand::ImportMacDb);
             }
             if reset {
                 self.reset_oui();

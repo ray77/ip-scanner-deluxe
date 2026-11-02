@@ -12,7 +12,9 @@ use ui::i18n::{t, tf};
 use ui::UiCommand;
 
 impl App {
-    pub fn execute(&mut self, cmd: UiCommand) {
+    /// Runs `cmd`; `parent` owns native file dialogs so they open centered on
+    /// (and modal to) the main window.
+    pub fn execute(&mut self, cmd: UiCommand, parent: &eframe::Frame) {
         match cmd {
             UiCommand::NewSearch => {
                 if self.is_scanning() {
@@ -22,10 +24,10 @@ impl App {
                 self.results_table = Default::default();
                 self.data.last_scan = None;
             }
-            UiCommand::LoadList => self.load_list(),
-            UiCommand::SaveAs(fmt) => self.save_as(fmt),
-            UiCommand::ImportFavorites => self.import_favorites(),
-            UiCommand::ExportFavorites => self.export_favorites(),
+            UiCommand::LoadList => self.load_list(parent),
+            UiCommand::SaveAs(fmt) => self.save_as(fmt, parent),
+            UiCommand::ImportFavorites => self.import_favorites(parent),
+            UiCommand::ExportFavorites => self.export_favorites(parent),
             UiCommand::Quit => self.ctx.send_viewport_cmd(egui::ViewportCommand::Close),
             UiCommand::ExpandAll => {
                 let state = if self.tab == 0 { &mut self.results_table } else { &mut self.favorites_table };
@@ -81,6 +83,7 @@ impl App {
             UiCommand::OpenOptions => self.open_options(OptionsTab::Scan),
             UiCommand::OpenProfiles => self.open_options(OptionsTab::Scan),
             UiCommand::OpenMacDb => self.dialogs.macdb = true,
+            UiCommand::ImportMacDb => self.import_oui(parent),
             UiCommand::OpenFingerprints => self.dialogs.fingerprints = true,
             UiCommand::SetLanguage(l) => {
                 self.settings.language = l;
@@ -98,7 +101,7 @@ impl App {
                 if self.is_scanning() {
                     self.stop_scan();
                 } else if self.range_text.trim().is_empty() {
-                    self.execute(UiCommand::FillLocalSubnet);
+                    self.execute(UiCommand::FillLocalSubnet, parent);
                     if !self.range_text.is_empty() {
                         self.start_scan(self.range_text.clone(), false);
                     }
@@ -205,7 +208,7 @@ impl App {
         })
     }
 
-    fn open_options(&mut self, tab: OptionsTab) {
+    pub(crate) fn open_options(&mut self, tab: OptionsTab) {
         self.dialogs.options = Some(OptionsDialog { tab, draft: self.settings.clone(), ports_error: None });
     }
 
@@ -323,9 +326,11 @@ impl App {
         rows.iter().filter_map(|r| self.host(r.ip).map(|h| (h, r.name.clone()))).collect()
     }
 
-    fn save_as(&mut self, fmt: ExportFormat) {
+    fn save_as(&mut self, fmt: ExportFormat, parent: &eframe::Frame) {
         let name = format!("scan-{}.{}", chrono::Local::now().format("%Y%m%d-%H%M"), fmt.ext());
-        let Some(path) = rfd::FileDialog::new().add_filter(fmt.ext().to_uppercase(), &[fmt.ext()]).set_file_name(name).save_file() else {
+        let Some(path) =
+            rfd::FileDialog::new().set_parent(parent).add_filter(fmt.ext().to_uppercase(), &[fmt.ext()]).set_file_name(name).save_file()
+        else {
             return;
         };
         match export::export(&path, fmt, &self.export_rows(), self.settings.csv_bom) {
@@ -334,8 +339,8 @@ impl App {
         }
     }
 
-    fn load_list(&mut self) {
-        let Some(path) = rfd::FileDialog::new().add_filter("Scan", &["json", "xml", "csv"]).pick_file() else { return };
+    fn load_list(&mut self, parent: &eframe::Frame) {
+        let Some(path) = rfd::FileDialog::new().set_parent(parent).add_filter("Scan", &["json", "xml", "csv"]).pick_file() else { return };
         match export::load_list(&path) {
             Ok(hosts) => {
                 if self.is_scanning() {
@@ -352,8 +357,8 @@ impl App {
         }
     }
 
-    fn import_favorites(&mut self) {
-        let Some(path) = rfd::FileDialog::new().add_filter("XML", &["xml"]).pick_file() else { return };
+    fn import_favorites(&mut self, parent: &eframe::Frame) {
+        let Some(path) = rfd::FileDialog::new().set_parent(parent).add_filter("XML", &["xml"]).pick_file() else { return };
         let r = std::fs::read_to_string(&path).map_err(anyhow::Error::from).and_then(|s| export::favorites_from_xml(&s));
         match r {
             Ok(favs) => {
@@ -371,8 +376,11 @@ impl App {
         }
     }
 
-    fn export_favorites(&mut self) {
-        let Some(path) = rfd::FileDialog::new().add_filter("XML", &["xml"]).set_file_name("favoriten.xml").save_file() else { return };
+    fn export_favorites(&mut self, parent: &eframe::Frame) {
+        let Some(path) = rfd::FileDialog::new().set_parent(parent).add_filter("XML", &["xml"]).set_file_name("favoriten.xml").save_file()
+        else {
+            return;
+        };
         match std::fs::write(&path, export::favorites_to_xml(&self.data.favorites)) {
             Ok(()) => self.toast(tf("msg.exported", &[("p", &path.display().to_string())]), false),
             Err(e) => self.toast(tf("err.export", &[("e", &e.to_string())]), true),
@@ -449,8 +457,8 @@ impl App {
         s
     }
 
-    pub fn import_oui(&mut self) {
-        let Some(files) = rfd::FileDialog::new().add_filter("IEEE CSV", &["csv"]).pick_files() else { return };
+    pub fn import_oui(&mut self, parent: &eframe::Frame) {
+        let Some(files) = rfd::FileDialog::new().set_parent(parent).add_filter("IEEE CSV", &["csv"]).pick_files() else { return };
         let out = self.paths.vendor_db_file();
         let version = format!("IEEE Import {}", chrono::Local::now().format("%Y-%m-%d"));
         match vendor_db::import_csv_files(&files, &out, &version) {

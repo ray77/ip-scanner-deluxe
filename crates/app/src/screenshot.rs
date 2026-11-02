@@ -14,7 +14,6 @@ pub struct CliOptions {
     pub size: Option<[f32; 2]>,
     pub lang_en: bool,
     pub dialog: Option<String>,
-    pub write_icon: Option<PathBuf>,
 }
 
 pub fn parse_args() -> CliOptions {
@@ -28,7 +27,6 @@ pub fn parse_args() -> CliOptions {
             "--theme" => o.dark = args.next().map(|t| t == "dark"),
             "--screenshot" => o.screenshot = args.next().map(PathBuf::from),
             "--dialog" => o.dialog = args.next(),
-            "--write-icon" => o.write_icon = args.next().map(PathBuf::from),
             "--size" => {
                 o.size = args.next().and_then(|s| {
                     let (w, h) = s.split_once('x')?;

@@ -125,7 +125,7 @@ jobs:
           R=dist/deb
           install -Dm755 target/release/IPScannerDeluxe $R/usr/bin/IPScannerDeluxe
           install -Dm644 packaging/linux/ip-scanner-deluxe.desktop $R/usr/share/applications/ip-scanner-deluxe.desktop
-          install -Dm644 packaging/icons/ip-scanner-deluxe.png $R/usr/share/icons/hicolor/256x256/apps/ip-scanner-deluxe.png
+          install -Dm644 packaging/icons/ip-scanner-deluxe.png $R/usr/share/icons/hicolor/512x512/apps/ip-scanner-deluxe.png
           install -Dm644 LICENSE-MIT $R/usr/share/doc/ip-scanner-deluxe/LICENSE-MIT
           install -Dm644 LICENSE-APACHE $R/usr/share/doc/ip-scanner-deluxe/LICENSE-APACHE
           install -Dm755 packaging/linux/postinst $R/DEBIAN/postinst

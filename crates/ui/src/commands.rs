@@ -45,6 +45,7 @@ pub enum UiCommand {
     // Settings
     OpenOptions,
     OpenMacDb,
+    ImportMacDb,
     OpenProfiles,
     OpenFingerprints,
     SetLanguage(Language),

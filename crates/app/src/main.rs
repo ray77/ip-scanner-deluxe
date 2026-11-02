@@ -30,44 +30,19 @@ fn init_logging(paths: &AppPaths) {
     }
 }
 
-/// Procedural application icon (`n`×`n`): monitor with green play triangle.
-fn icon(n: usize) -> egui::IconData {
-    let k = 64.0 / n as f32;
-    let mut rgba = vec![0u8; n * n * 4];
-    let mut put = |x: usize, y: usize, c: [u8; 4]| {
-        let i = (y * n + x) * 4;
-        rgba[i..i + 4].copy_from_slice(&c);
-    };
-    for y in 0..n {
-        for x in 0..n {
-            let (fx, fy) = (x as f32 * k, y as f32 * k);
-            if (6.0..58.0).contains(&fx) && (8.0..46.0).contains(&fy) {
-                let inner = (10.0..54.0).contains(&fx) && (12.0..42.0).contains(&fy);
-                put(x, y, if inner { [0x2F, 0x8F, 0xE0, 255] } else { [0x45, 0x4B, 0x53, 255] });
-            } else if (27.0..37.0).contains(&fx) && (46.0..52.0).contains(&fy) || (18.0..46.0).contains(&fx) && (52.0..56.0).contains(&fy) {
-                put(x, y, [0x45, 0x4B, 0x53, 255]);
-            }
-            // play triangle
-            let (px, py) = (fx - 24.0, fy - 17.0);
-            if (0.0..=18.0).contains(&px) && py >= px * 0.55 && py <= 20.0 - px * 0.55 {
-                put(x, y, [0x6C, 0xC2, 0x4A, 255]);
-            }
-        }
-    }
-    egui::IconData { rgba, width: n as u32, height: n as u32 }
+/// Application icon (monitor with IP pin), decoded once from the embedded PNG.
+pub fn app_icon() -> std::sync::Arc<egui::IconData> {
+    static ICON: std::sync::OnceLock<std::sync::Arc<egui::IconData>> = std::sync::OnceLock::new();
+    ICON.get_or_init(|| {
+        std::sync::Arc::new(
+            eframe::icon_data::from_png_bytes(include_bytes!("../../../packaging/icons/ip-scanner-deluxe.png")).unwrap_or_default(),
+        )
+    })
+    .clone()
 }
 
 fn main() -> eframe::Result<()> {
     let cli = screenshot::parse_args();
-    if let Some(path) = &cli.write_icon {
-        // Packaging helper: `IPScannerDeluxe --write-icon icon.png`
-        let i = icon(256);
-        if let Err(e) = screenshot::write_png(path, i.width as usize, i.height as usize, &i.rgba) {
-            eprintln!("cannot write icon: {e}");
-            std::process::exit(1);
-        }
-        return Ok(());
-    }
     let paths = AppPaths::detect();
     if let Err(e) = paths.ensure() {
         eprintln!("cannot create data directories: {e}");
@@ -95,7 +70,7 @@ fn main() -> eframe::Result<()> {
         .with_app_id("ip-scanner-deluxe")
         .with_inner_size([size[0].max(650.0), size[1].max(450.0)])
         .with_min_inner_size([650.0, 450.0])
-        .with_icon(icon(64));
+        .with_icon(app_icon());
     if let Some(p) = geometry.window_pos {
         viewport = viewport.with_position(p);
     }

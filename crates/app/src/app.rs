@@ -207,6 +207,14 @@ impl App {
             app.results_table.selected =
                 Some(ui::table::Selection { ip: "192.168.0.110".parse().unwrap_or(IpAddr::from([0, 0, 0, 0])), child: None });
         }
+        // `--dialog <name>` opens a dialog at start (manual checks, docs).
+        match app.cli.dialog.as_deref() {
+            Some("about") => app.dialogs.about = true,
+            Some("options") => app.open_options(OptionsTab::Scan),
+            Some("macdb") => app.dialogs.macdb = true,
+            Some("fingerprints") => app.dialogs.fingerprints = true,
+            _ => {}
+        }
         if app.range_text.trim().is_empty() {
             if let Some(r) = app.selected_interface().and_then(|i| i.subnet_range()) {
                 app.range_text = r;
@@ -558,7 +566,7 @@ fn unreachable_db() -> VendorDb {
 }
 
 impl eframe::App for App {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let pal = self.palette();
         if self.applied_dark != Some(pal.dark) {
             ui::apply_theme(ctx, &pal);
@@ -700,7 +708,7 @@ impl eframe::App for App {
         self.show_dialogs(ctx, &pal, &mut out);
 
         for cmd in out {
-            self.execute(cmd);
+            self.execute(cmd, frame);
         }
 
         // Persist window geometry and settings lazily.
