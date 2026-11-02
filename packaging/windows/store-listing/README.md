@@ -10,8 +10,10 @@ cargo run -p ip-scanner-deluxe -- --english --demo --expand --size 1366x768 --sc
 cargo run -p ip-scanner-deluxe -- --english --demo --expand --theme dark --size 1366x768 --screenshot packaging/windows/store-listing/en-us/3-dark.png
 ```
 
-(Same without `--english` into `de-de/`.) `StoreLogo-300x300.png` is the
-optional 1:1 Store logo.
+(Same without `--english` into `de-de/`.) Store logos, used for both
+languages: `PosterArt-720x1080.png` / `PosterArt-1440x2160.png` (9:16 poster
+art), `BoxArt-1080x1080.png` / `BoxArt-2160x2160.png` (1:1 box art) and
+`StoreLogo-300x300.png` (1:1 app tile icon).
 
 Rules: describe the app as a network administration and diagnostics tool. No
 other products' or companies' names in name, description or search terms; no
