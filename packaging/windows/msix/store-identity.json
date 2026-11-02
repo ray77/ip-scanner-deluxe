@@ -1,8 +1,8 @@
 {
-  "_comment": "Single source of the MSIX package identity. Replace every PLACEHOLDER value with the values from Microsoft Partner Center > Apps and games > IP Scanner Deluxe > Product management > Product identity. These values are public (they appear in every Store package); never put certificates, passwords or API secrets here.",
-  "IdentityName": "PLACEHOLDER.IPScannerDeluxe",
-  "Publisher": "CN=PLACEHOLDER-PUBLISHER-ID",
-  "PublisherDisplayName": "PLACEHOLDER Publisher display name",
-  "PackageFamilyName": "PLACEHOLDER",
-  "StoreProductId": "PLACEHOLDER"
+  "_comment": "Single source of the MSIX package identity, from Microsoft Partner Center > Apps and games > IP Scanner Deluxe > Product identity. These values are public (they appear in every Store package); never put certificates, passwords or API secrets here.",
+  "IdentityName": "DomySchmidt.IpScannerDeluxe",
+  "Publisher": "CN=1760539B-DCA2-4736-A581-F8246C1C0FBA",
+  "PublisherDisplayName": "Domy Schmidt",
+  "PackageFamilyName": "DomySchmidt.IpScannerDeluxe_wwet9ypr980gr",
+  "StoreProductId": "9NS53FFRBJHW"
 }

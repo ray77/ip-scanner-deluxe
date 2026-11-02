@@ -200,7 +200,10 @@ Privacy policy: [PRIVACY.md](../PRIVACY.md), URL
 3. Product management > Product identity: copy `Package/Identity/Name`,
    `Package/Identity/Publisher`, `Package/Properties/PublisherDisplayName`,
    Package Family Name and Store ID into
-   `packaging/windows/msix/store-identity.json` and commit.
+   `packaging/windows/msix/store-identity.json` and commit. Done: the app is
+   `DomySchmidt.IpScannerDeluxe`, Store ID `9NS53FFRBJHW`
+   (<https://apps.microsoft.com/detail/9NS53FFRBJHW>). CI builds with
+   `-RequireStoreIdentity`, so placeholders cannot come back unnoticed.
 4. Start a submission:
    - Pricing and availability: free, markets.
    - Properties: category "Utilities & tools", privacy policy URL,

@@ -125,7 +125,7 @@ jobs:
       - name: Build MSIX
         id: msix
         shell: pwsh
-        run: ./packaging/windows/msix/scripts/build-msix.ps1 -Exe target/release/IPScannerDeluxe.exe -OutDir dist
+        run: ./packaging/windows/msix/scripts/build-msix.ps1 -Exe target/release/IPScannerDeluxe.exe -OutDir dist -RequireStoreIdentity
       - name: Verify package contents
         shell: pwsh
         run: |
