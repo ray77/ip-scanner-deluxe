@@ -127,6 +127,28 @@ jobs:
             if (-not (Test-Path $shot)) { $failed += $renderer }
           }
           if ($failed) { throw "the main window did not open: $failed" }
+      - name: Renderer benchmark (temporary)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $env:IPSD_RENDERER = "wgpu"
+          $cases = @(
+            @{ n = "autovsync";            p = "";            l = "";  s = "653x473" },
+            @{ n = "autovsync-1366";       p = "";            l = "";  s = "1366x768" },
+            @{ n = "autonovsync";          p = "autonovsync"; l = "";  s = "653x473" },
+            @{ n = "immediate";            p = "immediate";   l = "";  s = "653x473" },
+            @{ n = "fifo-latency1";        p = "fifo";        l = "1"; s = "653x473" },
+            @{ n = "autonovsync-1366";     p = "autonovsync"; l = "";  s = "1366x768" }
+          )
+          foreach ($c in $cases) {
+            $env:IPSD_PRESENT_MODE = $c.p
+            $env:IPSD_FRAME_LATENCY = $c.l
+            $err = "$env:RUNNER_TEMP\bench-$($c.n).txt"
+            $p = Start-Process target/release/IPScannerDeluxe.exe -ArgumentList '--demo', '--expand', '--english', '--bench', '--size', $c.s -PassThru -RedirectStandardError $err
+            if (-not $p.WaitForExit(60000)) { $p.Kill() }
+            Write-Host "$($c.n): $(Get-Content $err -ErrorAction SilentlyContinue)"
+          }
+          Get-CimInstance Win32_Processor | Format-List Name, NumberOfLogicalProcessors
       - uses: actions/upload-artifact@v4
         if: always()
         with:

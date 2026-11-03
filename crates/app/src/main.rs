@@ -104,7 +104,7 @@ fn main() -> eframe::Result<()> {
     drop(geometry);
     let options = eframe::NativeOptions { viewport, centered: true, persist_window: false, ..Default::default() };
     let log_file = paths.log_file();
-    let interactive = cli.screenshot.is_none();
+    let interactive = cli.screenshot.is_none() && !cli.bench;
     let result = run_ui(options, rt, paths, cli);
     if let Err(e) = &result {
         tracing::error!("cannot open the main window: {e}");
@@ -127,6 +127,8 @@ fn run_ui(options: eframe::NativeOptions, rt: tokio::runtime::Runtime, paths: Ap
             Ok(Box::new(app::App::new(cc, rt, paths, cli)))
         })
     };
+    #[cfg(windows)]
+    let options = eframe::NativeOptions { wgpu_options: wgpu_options(), ..options };
     // IPSD_RENDERER=wgpu skips OpenGL (diagnostics, or drivers that open a broken OpenGL window).
     #[cfg(windows)]
     if std::env::var("IPSD_RENDERER").is_ok_and(|r| r.eq_ignore_ascii_case("wgpu")) {
@@ -146,6 +148,26 @@ fn run_ui(options: eframe::NativeOptions, rt: tokio::runtime::Runtime, paths: Ap
         }
     }
     result
+}
+
+/// Direct3D settings; IPSD_PRESENT_MODE and IPSD_FRAME_LATENCY override them for diagnostics.
+#[cfg(windows)]
+fn wgpu_options() -> eframe::egui_wgpu::WgpuConfiguration {
+    let mut config = eframe::egui_wgpu::WgpuConfiguration::default();
+    if let Ok(mode) = std::env::var("IPSD_PRESENT_MODE") {
+        config.present_mode = match mode.to_ascii_lowercase().as_str() {
+            "fifo" => wgpu::PresentMode::Fifo,
+            "mailbox" => wgpu::PresentMode::Mailbox,
+            "immediate" => wgpu::PresentMode::Immediate,
+            "autonovsync" => wgpu::PresentMode::AutoNoVsync,
+            _ => wgpu::PresentMode::AutoVsync,
+        };
+    }
+    if let Some(latency) = std::env::var("IPSD_FRAME_LATENCY").ok().and_then(|l| l.parse().ok()) {
+        config.desired_maximum_frame_latency = Some(latency);
+    }
+    tracing::info!("Direct3D: present mode {:?}, frame latency {:?}", config.present_mode, config.desired_maximum_frame_latency);
+    config
 }
 
 /// Release builds on Windows have no console, so startup errors would vanish silently.

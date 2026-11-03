@@ -125,13 +125,15 @@ pub struct App {
     pub ctx: egui::Context,
     pub cli: crate::screenshot::CliOptions,
     pub frames: u64,
+    bench: Option<crate::screenshot::Bench>,
 }
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>, rt: tokio::runtime::Runtime, paths: AppPaths, cli: crate::screenshot::CliOptions) -> Self {
         // 1. Settings (demo mode never touches the user's data)
         // Demo and screenshot runs never touch the user's real settings.
-        let store = if cli.demo || cli.screenshot.is_some() { Store::in_memory() } else { Store::open(&paths.store_file()) };
+        let store = if cli.demo || cli.screenshot.is_some() || cli.bench { Store::in_memory() } else { Store::open(&paths.store_file()) };
+        let bench = cli.bench.then(crate::screenshot::Bench::new);
         let store = match store {
             Ok(s) => Some(s),
             Err(e) => {
@@ -196,6 +198,7 @@ impl App {
             ctx: cc.egui_ctx.clone(),
             cli,
             frames: 0,
+            bench,
         };
         if app.cli.demo {
             for h in crate::screenshot::demo_hosts() {
@@ -744,6 +747,15 @@ impl eframe::App for App {
             ctx.request_repaint_after(std::time::Duration::from_millis(250));
         }
         self.screenshot_step(ctx);
+        if let Some(bench) = &mut self.bench {
+            if let Some(report) = bench.frame(frame.info().cpu_usage) {
+                tracing::info!("{report}");
+                eprintln!("{report}");
+                self.bench = None;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+            ctx.request_repaint();
+        }
     }
 
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {

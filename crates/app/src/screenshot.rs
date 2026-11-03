@@ -14,6 +14,8 @@ pub struct CliOptions {
     pub size: Option<[f32; 2]>,
     pub lang_en: bool,
     pub dialog: Option<String>,
+    /// `--bench`: repaint continuously, log frame times and exit (renderer diagnostics).
+    pub bench: bool,
 }
 
 pub fn parse_args() -> CliOptions {
@@ -27,6 +29,7 @@ pub fn parse_args() -> CliOptions {
             "--theme" => o.dark = args.next().map(|t| t == "dark"),
             "--screenshot" => o.screenshot = args.next().map(PathBuf::from),
             "--dialog" => o.dialog = args.next(),
+            "--bench" => o.bench = true,
             "--size" => {
                 o.size = args.next().and_then(|s| {
                     let (w, h) = s.split_once('x')?;
@@ -125,4 +128,46 @@ pub fn write_png(path: &std::path::Path, width: usize, height: usize, rgba: &[u8
     chunk(&mut out, b"IDAT", &z);
     chunk(&mut out, b"IEND", &[]);
     std::fs::File::create(path)?.write_all(&out)
+}
+
+/// Frame time measurement for `--bench`: 2 s warm-up, then 6 s of continuous repaints.
+pub struct Bench {
+    start: std::time::Instant,
+    last: Option<std::time::Instant>,
+    intervals_ms: Vec<f32>,
+    cpu_ms: Vec<f32>,
+}
+
+impl Bench {
+    pub fn new() -> Self {
+        Bench { start: std::time::Instant::now(), last: None, intervals_ms: Vec::new(), cpu_ms: Vec::new() }
+    }
+
+    /// Records one frame; returns the report once the measurement is complete.
+    pub fn frame(&mut self, cpu_usage: Option<f32>) -> Option<String> {
+        let now = std::time::Instant::now();
+        let elapsed = now.duration_since(self.start).as_secs_f32();
+        if elapsed >= 2.0 {
+            if let Some(last) = self.last {
+                self.intervals_ms.push(now.duration_since(last).as_secs_f32() * 1000.0);
+                self.cpu_ms.push(cpu_usage.unwrap_or(0.0) * 1000.0);
+            }
+            self.last = Some(now);
+        }
+        if elapsed < 8.0 || self.intervals_ms.is_empty() {
+            return None;
+        }
+        let mut iv = self.intervals_ms.clone();
+        iv.sort_by(f32::total_cmp);
+        let mean = |v: &[f32]| v.iter().sum::<f32>() / v.len() as f32;
+        let p95 = iv[(iv.len() * 95 / 100).min(iv.len() - 1)];
+        Some(format!(
+            "bench: {} frames, {:.1} fps, frame interval mean {:.1} ms / p95 {:.1} ms, app cpu mean {:.1} ms",
+            iv.len(),
+            1000.0 / mean(&iv),
+            mean(&iv),
+            p95,
+            mean(&self.cpu_ms)
+        ))
+    }
 }
