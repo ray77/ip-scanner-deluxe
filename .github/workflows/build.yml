@@ -120,7 +120,7 @@ jobs:
               $p.Kill()
               Write-Host "::warning::$renderer renderer timed out"
             }
-            Write-Host "===== $renderer: exit $($p.ExitCode) ====="
+            Write-Host "===== ${renderer}: exit $($p.ExitCode) ====="
             Get-Content $log -ErrorAction SilentlyContinue
             Get-Content "$out\$renderer-stderr.txt" -ErrorAction SilentlyContinue
             Copy-Item $log "$out\$renderer.log" -ErrorAction SilentlyContinue
