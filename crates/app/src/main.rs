@@ -127,6 +127,13 @@ fn run_ui(options: eframe::NativeOptions, rt: tokio::runtime::Runtime, paths: Ap
             Ok(Box::new(app::App::new(cc, rt, paths, cli)))
         })
     };
+    // IPSD_RENDERER=wgpu skips OpenGL (diagnostics, or drivers that open a broken OpenGL window).
+    #[cfg(windows)]
+    if std::env::var("IPSD_RENDERER").is_ok_and(|r| r.eq_ignore_ascii_case("wgpu")) {
+        tracing::info!("renderer: Direct3D 12 (IPSD_RENDERER)");
+        let wgpu = eframe::NativeOptions { renderer: eframe::Renderer::Wgpu, ..options };
+        return eframe::run_native("IP Scanner Deluxe", wgpu, creator(state));
+    }
     #[cfg(windows)]
     let fallback = eframe::NativeOptions { renderer: eframe::Renderer::Wgpu, ..options.clone() };
     let glow = eframe::NativeOptions { renderer: eframe::Renderer::Glow, ..options };

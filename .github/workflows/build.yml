@@ -94,20 +94,44 @@ jobs:
           $deps
           if ($deps -match 'VCRUNTIME|MSVCP|api-ms-win-crt') { throw "IPScannerDeluxe.exe must not depend on the Visual C++ runtime" }
       # The runner is a VM without a GPU driver (only OpenGL 1.1), like many
-      # Windows Server and virtual machines: the window must still open.
+      # Windows Server and virtual machines: the window must still open, by
+      # default (OpenGL with Direct3D fallback) and with Direct3D forced.
       - name: Start test without GPU
         shell: pwsh
         run: |
-          $shot = "$env:RUNNER_TEMP\start-test.png"
-          $p = Start-Process target/release/IPScannerDeluxe.exe -ArgumentList '--demo', '--english', '--screenshot', $shot -PassThru
-          if (-not $p.WaitForExit(120000)) { $p.Kill(); Write-Host "timed out" }
-          Get-Content "$env:APPDATA\IPScannerDeluxe\logs\ip-scanner-deluxe.log" -ErrorAction SilentlyContinue
-          if (-not (Test-Path $shot)) { throw "the main window did not open" }
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $env:IPSD_LOG = "debug"
+          $env:RUST_BACKTRACE = "1"
+          $out = "$env:RUNNER_TEMP\start-test"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $log = "$env:APPDATA\IPScannerDeluxe\logs\ip-scanner-deluxe.log"
+          $failed = @()
+          foreach ($renderer in 'default', 'wgpu') {
+            if ($renderer -eq 'default') { Remove-Item Env:IPSD_RENDERER -ErrorAction SilentlyContinue } else { $env:IPSD_RENDERER = $renderer }
+            Remove-Item $log -ErrorAction SilentlyContinue
+            $shot = "$out\$renderer.png"
+            $p = Start-Process target/release/IPScannerDeluxe.exe -ArgumentList '--demo', '--english', '--screenshot', $shot -PassThru `
+              -RedirectStandardOutput "$out\$renderer-stdout.txt" -RedirectStandardError "$out\$renderer-stderr.txt"
+            if (-not $p.WaitForExit(90000)) {
+              $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+              $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+              [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+              $bmp.Save("$out\$renderer-desktop-timeout.png")
+              $p.Kill()
+              Write-Host "::warning::$renderer renderer timed out"
+            }
+            Write-Host "===== $renderer: exit $($p.ExitCode) ====="
+            Get-Content $log -ErrorAction SilentlyContinue
+            Get-Content "$out\$renderer-stderr.txt" -ErrorAction SilentlyContinue
+            Copy-Item $log "$out\$renderer.log" -ErrorAction SilentlyContinue
+            if (-not (Test-Path $shot)) { $failed += $renderer }
+          }
+          if ($failed) { throw "the main window did not open: $failed" }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: start-test-windows
-          path: ${{ runner.temp }}/start-test.png
+          path: ${{ runner.temp }}/start-test
           retention-days: 7
           if-no-files-found: ignore
       - name: Package
