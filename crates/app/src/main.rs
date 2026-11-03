@@ -99,7 +99,56 @@ fn main() -> eframe::Result<()> {
     if let Some(p) = geometry.window_pos {
         viewport = viewport.with_position(p);
     }
+    // Language for the startup error dialog; the app applies it again from the settings.
+    ui::set_language(geometry.language);
     drop(geometry);
     let options = eframe::NativeOptions { viewport, centered: true, persist_window: false, ..Default::default() };
-    eframe::run_native("IP Scanner Deluxe", options, Box::new(move |cc| Ok(Box::new(app::App::new(cc, rt, paths, cli)))))
+    let log_file = paths.log_file();
+    let interactive = cli.screenshot.is_none();
+    let result = run_ui(options, rt, paths, cli);
+    if let Err(e) = &result {
+        tracing::error!("cannot open the main window: {e}");
+        if interactive {
+            startup_error_dialog(&e.to_string(), &log_file);
+        }
+    }
+    result
+}
+
+/// Opens the main window. OpenGL first; on Windows without a usable OpenGL
+/// driver (virtual machines, Windows Server, some RDP sessions) the window
+/// falls back to Direct3D 12, which also runs on the WARP software rasterizer.
+fn run_ui(options: eframe::NativeOptions, rt: tokio::runtime::Runtime, paths: AppPaths, cli: screenshot::CliOptions) -> eframe::Result<()> {
+    // Shared so a failed renderer (which fails before creating the app) leaves it for the next one.
+    let state = std::rc::Rc::new(std::cell::RefCell::new(Some((rt, paths, cli))));
+    let creator = |state: std::rc::Rc<std::cell::RefCell<Option<_>>>| -> eframe::AppCreator<'static> {
+        Box::new(move |cc| {
+            let (rt, paths, cli) = state.borrow_mut().take().ok_or("application already started")?;
+            Ok(Box::new(app::App::new(cc, rt, paths, cli)))
+        })
+    };
+    #[cfg(windows)]
+    let fallback = eframe::NativeOptions { renderer: eframe::Renderer::Wgpu, ..options.clone() };
+    let glow = eframe::NativeOptions { renderer: eframe::Renderer::Glow, ..options };
+    let result = eframe::run_native("IP Scanner Deluxe", glow, creator(state.clone()));
+    #[cfg(windows)]
+    if let Err(e) = &result {
+        if state.borrow().is_some() {
+            tracing::warn!("OpenGL renderer unavailable ({e}), falling back to Direct3D 12");
+            return eframe::run_native("IP Scanner Deluxe", fallback, creator(state));
+        }
+    }
+    result
+}
+
+/// Release builds on Windows have no console, so startup errors would vanish silently.
+fn startup_error_dialog(error: &str, log_file: &std::path::Path) {
+    let text = ui::i18n::tf("startup.error", &[("error", error), ("log", &log_file.display().to_string())]);
+    eprintln!("{text}");
+    let _ = rfd::MessageDialog::new()
+        .set_level(rfd::MessageLevel::Error)
+        .set_title("IP Scanner Deluxe")
+        .set_description(text)
+        .set_buttons(rfd::MessageButtons::Ok)
+        .show();
 }

@@ -44,6 +44,12 @@ parking_lot.workspace = true
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 open.workspace = true
 
+# Windows: Direct3D 12 renderer as fallback where no usable OpenGL driver exists
+# (virtual machines, Windows Server); D3D12 also runs on the WARP software rasterizer.
+[target."cfg(windows)".dependencies]
+eframe = { workspace = true, features = ["wgpu"] }
+wgpu = { version = "27", default-features = false, features = ["dx12"] }
+
 [target."cfg(windows)".build-dependencies]
 winresource = "0.1.34"
 

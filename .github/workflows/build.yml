@@ -93,6 +93,23 @@ jobs:
           $deps = & $dumpbin.FullName /dependents target/release/IPScannerDeluxe.exe
           $deps
           if ($deps -match 'VCRUNTIME|MSVCP|api-ms-win-crt') { throw "IPScannerDeluxe.exe must not depend on the Visual C++ runtime" }
+      # The runner is a VM without a GPU driver (only OpenGL 1.1), like many
+      # Windows Server and virtual machines: the window must still open.
+      - name: Start test without GPU
+        shell: pwsh
+        run: |
+          $shot = "$env:RUNNER_TEMP\start-test.png"
+          $p = Start-Process target/release/IPScannerDeluxe.exe -ArgumentList '--demo', '--english', '--screenshot', $shot -PassThru
+          if (-not $p.WaitForExit(120000)) { $p.Kill(); Write-Host "timed out" }
+          Get-Content "$env:APPDATA\IPScannerDeluxe\logs\ip-scanner-deluxe.log" -ErrorAction SilentlyContinue
+          if (-not (Test-Path $shot)) { throw "the main window did not open" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: start-test-windows
+          path: ${{ runner.temp }}/start-test.png
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Package
         shell: pwsh
         run: |

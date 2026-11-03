@@ -21,6 +21,11 @@ pub fn is_english() -> bool {
 /// (key, Deutsch, English)
 const STRINGS: &[(&str, &str, &str)] = &[
     ("app.title", "IP Scanner Deluxe", "IP Scanner Deluxe"),
+    (
+        "startup.error",
+        "Das Programmfenster konnte nicht geöffnet werden.\n\n{error}\n\nProtokoll: {log}",
+        "The program window could not be opened.\n\n{error}\n\nLog file: {log}",
+    ),
     // Menus
     ("menu.file", "Datei", "File"),
     ("menu.view", "Ansicht", "View"),

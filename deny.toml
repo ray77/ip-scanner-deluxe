@@ -1,9 +1,9 @@
 # cargo-deny configuration: `cargo deny check licenses sources`.
 #
 # The allow list reflects an audit of Cargo.lock (all targets). Every
-# dependency license is permissive; the only weak copyleft licenses are
-# MPL-2.0 (one crate, file-level, unmodified) and the font licenses of the
-# fonts bundled with egui. Anything else, in particular GPL/AGPL/LGPL-only
+# dependency license is permissive or public domain (CC0-1.0, one crate); the
+# only weak copyleft licenses are MPL-2.0 (one crate, file-level, unmodified)
+# and the font licenses of the fonts bundled with egui. Anything else, in particular GPL/AGPL/LGPL-only
 # crates or an unknown license, fails the check and needs a deliberate review.
 
 [graph]
@@ -30,6 +30,8 @@ allow = [
 exceptions = [
     # Used unmodified by `directories`; MPL-2.0 is file-level copyleft and allows static linking.
     { allow = ["MPL-2.0"], crate = "option-ext" },
+    # Public-domain dedication; used by the wgpu shader compiler (naga), Windows only.
+    { allow = ["CC0-1.0"], crate = "hexf-parse" },
 ]
 
 [licenses.private]
