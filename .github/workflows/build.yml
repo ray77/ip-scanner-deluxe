@@ -93,62 +93,38 @@ jobs:
           $deps = & $dumpbin.FullName /dependents target/release/IPScannerDeluxe.exe
           $deps
           if ($deps -match 'VCRUNTIME|MSVCP|api-ms-win-crt') { throw "IPScannerDeluxe.exe must not depend on the Visual C++ runtime" }
-      # The runner is a VM without a GPU driver (only OpenGL 1.1), like many
-      # Windows Server and virtual machines: the window must still open, by
-      # default (OpenGL with Direct3D fallback) and with Direct3D forced.
+      # The runner is a VM without a GPU (only OpenGL 1.1 and WARP), like many
+      # Windows Server and virtual machines: the window must open with the CPU
+      # renderer chosen automatically, and with Direct3D forced. The bench runs
+      # report the frame times of both renderers.
       - name: Start test without GPU
         shell: pwsh
         run: |
-          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $env:IPSD_LOG = "debug"
-          $env:RUST_BACKTRACE = "1"
+          $env:IPSD_LOG = "info"
           $out = "$env:RUNNER_TEMP\start-test"
           New-Item -ItemType Directory -Force $out | Out-Null
           $log = "$env:APPDATA\IPScannerDeluxe\logs\ip-scanner-deluxe.log"
           $failed = @()
-          foreach ($renderer in 'default', 'wgpu') {
-            if ($renderer -eq 'default') { Remove-Item Env:IPSD_RENDERER -ErrorAction SilentlyContinue } else { $env:IPSD_RENDERER = $renderer }
-            Remove-Item $log -ErrorAction SilentlyContinue
-            $shot = "$out\$renderer.png"
-            $p = Start-Process target/release/IPScannerDeluxe.exe -ArgumentList '--demo', '--english', '--screenshot', $shot -PassThru `
-              -RedirectStandardOutput "$out\$renderer-stdout.txt" -RedirectStandardError "$out\$renderer-stderr.txt"
-            if (-not $p.WaitForExit(90000)) {
-              $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-              $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-              [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
-              $bmp.Save("$out\$renderer-desktop-timeout.png")
-              $p.Kill()
-              Write-Host "::warning::$renderer renderer timed out"
-            }
-            Write-Host "===== ${renderer}: exit $($p.ExitCode) ====="
-            Get-Content $log -ErrorAction SilentlyContinue
-            Get-Content "$out\$renderer-stderr.txt" -ErrorAction SilentlyContinue
-            Copy-Item $log "$out\$renderer.log" -ErrorAction SilentlyContinue
-            if (-not (Test-Path $shot)) { $failed += $renderer }
-          }
-          if ($failed) { throw "the main window did not open: $failed" }
-      - name: Renderer benchmark (temporary)
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $env:IPSD_RENDERER = "wgpu"
           $cases = @(
-            @{ n = "autovsync";            p = "";            l = "";  s = "653x473" },
-            @{ n = "autovsync-1366";       p = "";            l = "";  s = "1366x768" },
-            @{ n = "autonovsync";          p = "autonovsync"; l = "";  s = "653x473" },
-            @{ n = "immediate";            p = "immediate";   l = "";  s = "653x473" },
-            @{ n = "fifo-latency1";        p = "fifo";        l = "1"; s = "653x473" },
-            @{ n = "autonovsync-1366";     p = "autonovsync"; l = "";  s = "1366x768" }
+            @{ n = "auto";       r = "";     a = @('--demo', '--expand', '--english', '--bench', '--size', '1366x768'); ok = "bench:" },
+            @{ n = "wgpu";       r = "wgpu"; a = @('--demo', '--expand', '--english', '--bench', '--size', '1366x768'); ok = "bench:" },
+            @{ n = "wgpu-shot";  r = "wgpu"; a = @('--demo', '--english', '--screenshot', "$out\wgpu.png"); ok = "" }
           )
           foreach ($c in $cases) {
-            $env:IPSD_PRESENT_MODE = $c.p
-            $env:IPSD_FRAME_LATENCY = $c.l
-            $err = "$env:RUNNER_TEMP\bench-$($c.n).txt"
-            $p = Start-Process target/release/IPScannerDeluxe.exe -ArgumentList '--demo', '--expand', '--english', '--bench', '--size', $c.s -PassThru -RedirectStandardError $err
-            if (-not $p.WaitForExit(60000)) { $p.Kill() }
-            Write-Host "$($c.n): $(Get-Content $err -ErrorAction SilentlyContinue)"
+            $env:IPSD_RENDERER = $c.r
+            Remove-Item $log -ErrorAction SilentlyContinue
+            $err = "$out\$($c.n)-stderr.txt"
+            $p = Start-Process target/release/IPScannerDeluxe.exe -ArgumentList $c.a -PassThru -RedirectStandardError $err
+            if (-not $p.WaitForExit(90000)) { $p.Kill(); Write-Host "::warning::$($c.n) timed out" }
+            Write-Host "===== $($c.n): exit $($p.ExitCode) ====="
+            Get-Content $log -ErrorAction SilentlyContinue | Select-String -Pattern 'renderer|adapters|bench|ERROR|WARN'
+            Copy-Item $log "$out\$($c.n).log" -ErrorAction SilentlyContinue
+            $stderr = Get-Content $err -Raw -ErrorAction SilentlyContinue
+            $passed = if ($c.ok) { $stderr -match $c.ok } else { Test-Path "$out\wgpu.png" }
+            if (-not $passed) { $failed += $c.n }
           }
-          Get-CimInstance Win32_Processor | Format-List Name, NumberOfLogicalProcessors
+          if (-not (Select-String -Path "$out\auto.log" -Pattern 'renderer: software' -Quiet)) { $failed += "auto did not choose the CPU renderer" }
+          if ($failed) { throw "start test failed: $failed" }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

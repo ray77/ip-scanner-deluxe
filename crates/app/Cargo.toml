@@ -43,9 +43,11 @@ tracing-subscriber.workspace = true
 parking_lot.workspace = true
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 open.workspace = true
+# CPU renderer: used automatically on Windows without a GPU, elsewhere via IPSD_RENDERER=software.
+egui_software_backend = { version = "0.0.2", default-features = false, features = ["std", "winit", "rayon"] }
 
-# Windows: Direct3D 12 renderer as fallback where no usable OpenGL driver exists
-# (virtual machines, Windows Server); D3D12 also runs on the WARP software rasterizer.
+# Windows: Direct3D 12 renderer as fallback where a GPU has no usable OpenGL
+# driver; wgpu also detects machines without a GPU (see has_gpu in main.rs).
 [target."cfg(windows)".dependencies]
 eframe = { workspace = true, features = ["wgpu"] }
 wgpu = { version = "27", default-features = false, features = ["dx12"] }

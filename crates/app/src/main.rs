@@ -7,6 +7,7 @@ mod dialogs;
 mod export;
 mod licenses;
 mod screenshot;
+mod software;
 mod state;
 mod tools;
 
@@ -115,24 +116,27 @@ fn main() -> eframe::Result<()> {
     result
 }
 
-/// Opens the main window. OpenGL first; on Windows without a usable OpenGL
-/// driver (virtual machines, Windows Server, some RDP sessions) the window
-/// falls back to Direct3D 12, which also runs on the WARP software rasterizer.
+/// Opens the main window. OpenGL first; Windows without a GPU (virtual
+/// machines, Windows Server) uses the CPU renderer, and Windows with a GPU but
+/// without a usable OpenGL driver falls back to Direct3D 12.
+/// IPSD_RENDERER=glow|wgpu|software forces a renderer (diagnostics, broken drivers).
 fn run_ui(options: eframe::NativeOptions, rt: tokio::runtime::Runtime, paths: AppPaths, cli: screenshot::CliOptions) -> eframe::Result<()> {
+    let forced = std::env::var("IPSD_RENDERER").map(|r| r.to_ascii_lowercase()).unwrap_or_default();
+    if forced == "software" || (forced.is_empty() && cfg!(windows) && !has_gpu()) {
+        tracing::info!("renderer: software");
+        return software::run(options.viewport, rt, paths, cli).map_err(|e| eframe::Error::AppCreation(e.into()));
+    }
     // Shared so a failed renderer (which fails before creating the app) leaves it for the next one.
     let state = std::rc::Rc::new(std::cell::RefCell::new(Some((rt, paths, cli))));
     let creator = |state: std::rc::Rc<std::cell::RefCell<Option<_>>>| -> eframe::AppCreator<'static> {
         Box::new(move |cc| {
             let (rt, paths, cli) = state.borrow_mut().take().ok_or("application already started")?;
-            Ok(Box::new(app::App::new(cc, rt, paths, cli)))
+            Ok(Box::new(app::App::new(&cc.egui_ctx, rt, paths, cli)))
         })
     };
     #[cfg(windows)]
-    let options = eframe::NativeOptions { wgpu_options: wgpu_options(), ..options };
-    // IPSD_RENDERER=wgpu skips OpenGL (diagnostics, or drivers that open a broken OpenGL window).
-    #[cfg(windows)]
-    if std::env::var("IPSD_RENDERER").is_ok_and(|r| r.eq_ignore_ascii_case("wgpu")) {
-        tracing::info!("renderer: Direct3D 12 (IPSD_RENDERER)");
+    if forced == "wgpu" {
+        tracing::info!("renderer: Direct3D 12");
         let wgpu = eframe::NativeOptions { renderer: eframe::Renderer::Wgpu, ..options };
         return eframe::run_native("IP Scanner Deluxe", wgpu, creator(state));
     }
@@ -142,7 +146,7 @@ fn run_ui(options: eframe::NativeOptions, rt: tokio::runtime::Runtime, paths: Ap
     let result = eframe::run_native("IP Scanner Deluxe", glow, creator(state.clone()));
     #[cfg(windows)]
     if let Err(e) = &result {
-        if state.borrow().is_some() {
+        if state.borrow().is_some() && forced.is_empty() {
             tracing::warn!("OpenGL renderer unavailable ({e}), falling back to Direct3D 12");
             return eframe::run_native("IP Scanner Deluxe", fallback, creator(state));
         }
@@ -150,24 +154,24 @@ fn run_ui(options: eframe::NativeOptions, rt: tokio::runtime::Runtime, paths: Ap
     result
 }
 
-/// Direct3D settings; IPSD_PRESENT_MODE and IPSD_FRAME_LATENCY override them for diagnostics.
+/// True if a hardware graphics adapter exists. Without one Windows only offers
+/// OpenGL 1.1 and WARP, both far slower than the CPU renderer.
 #[cfg(windows)]
-fn wgpu_options() -> eframe::egui_wgpu::WgpuConfiguration {
-    let mut config = eframe::egui_wgpu::WgpuConfiguration::default();
-    if let Ok(mode) = std::env::var("IPSD_PRESENT_MODE") {
-        config.present_mode = match mode.to_ascii_lowercase().as_str() {
-            "fifo" => wgpu::PresentMode::Fifo,
-            "mailbox" => wgpu::PresentMode::Mailbox,
-            "immediate" => wgpu::PresentMode::Immediate,
-            "autonovsync" => wgpu::PresentMode::AutoNoVsync,
-            _ => wgpu::PresentMode::AutoVsync,
-        };
-    }
-    if let Some(latency) = std::env::var("IPSD_FRAME_LATENCY").ok().and_then(|l| l.parse().ok()) {
-        config.desired_maximum_frame_latency = Some(latency);
-    }
-    tracing::info!("Direct3D: present mode {:?}, frame latency {:?}", config.present_mode, config.desired_maximum_frame_latency);
-    config
+fn has_gpu() -> bool {
+    let started = std::time::Instant::now();
+    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+        backends: wgpu::Backends::DX12,
+        ..wgpu::InstanceDescriptor::from_env_or_default()
+    });
+    let adapters: Vec<wgpu::AdapterInfo> = instance.enumerate_adapters(wgpu::Backends::DX12).iter().map(|a| a.get_info()).collect();
+    let names: Vec<String> = adapters.iter().map(|a| format!("{} ({:?})", a.name, a.device_type)).collect();
+    tracing::info!("graphics adapters: {} [{} ms]", names.join(", "), started.elapsed().as_millis());
+    adapters.iter().any(|a| a.device_type != wgpu::DeviceType::Cpu)
+}
+
+#[cfg(not(windows))]
+fn has_gpu() -> bool {
+    true
 }
 
 /// Release builds on Windows have no console, so startup errors would vanish silently.

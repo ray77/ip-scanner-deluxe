@@ -129,7 +129,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(cc: &eframe::CreationContext<'_>, rt: tokio::runtime::Runtime, paths: AppPaths, cli: crate::screenshot::CliOptions) -> Self {
+    pub fn new(egui_ctx: &egui::Context, rt: tokio::runtime::Runtime, paths: AppPaths, cli: crate::screenshot::CliOptions) -> Self {
         // 1. Settings (demo mode never touches the user's data)
         // Demo and screenshot runs never touch the user's real settings.
         let store = if cli.demo || cli.screenshot.is_some() || cli.bench { Store::in_memory() } else { Store::open(&paths.store_file()) };
@@ -154,7 +154,7 @@ impl App {
         }
         ui::set_language(settings.language);
         // 2. Theme + fonts
-        ui::install_fonts(&cc.egui_ctx);
+        ui::install_fonts(egui_ctx);
         // 3. OUI database (user import overrides the bundled one)
         let (vendors, vendor_source) = Self::open_vendor_db(&paths);
         // Fingerprints
@@ -195,7 +195,7 @@ impl App {
             applied_dark: None,
             settings_dirty: false,
             last_settings_save: Instant::now(),
-            ctx: cc.egui_ctx.clone(),
+            ctx: egui_ctx.clone(),
             cli,
             frames: 0,
             bench,
@@ -300,9 +300,12 @@ impl App {
         self.toast = Some(Toast { text: text.into(), error, at: Instant::now() });
     }
 
+    /// Repaint trigger for background tasks. Scans emit an event per probe, so
+    /// repaints are coalesced to at most 20 per second; without a GPU (software
+    /// rendering) a repaint per event would keep the CPU busy drawing.
     pub fn repaint_fn(&self) -> Arc<dyn Fn() + Send + Sync> {
         let ctx = self.ctx.clone();
-        Arc::new(move || ctx.request_repaint())
+        Arc::new(move || ctx.request_repaint_after(std::time::Duration::from_millis(50)))
     }
 
     pub fn mark_settings(&mut self) {
@@ -579,6 +582,18 @@ fn unreachable_db() -> VendorDb {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let cpu_usage = frame.info().cpu_usage;
+        self.run_frame(ctx, Some(frame), cpu_usage);
+    }
+
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        self.shutdown();
+    }
+}
+
+impl App {
+    /// One UI frame, shared by the eframe renderers and the software renderer.
+    pub fn run_frame(&mut self, ctx: &egui::Context, parent: crate::commands::Parent<'_>, cpu_usage: Option<f32>) {
         let pal = self.palette();
         if self.applied_dark != Some(pal.dark) {
             ui::apply_theme(ctx, &pal);
@@ -720,7 +735,7 @@ impl eframe::App for App {
         self.show_dialogs(ctx, &pal, &mut out);
 
         for cmd in out {
-            self.execute(cmd, frame);
+            self.execute(cmd, parent);
         }
 
         // Persist window geometry and settings lazily.
@@ -748,7 +763,7 @@ impl eframe::App for App {
         }
         self.screenshot_step(ctx);
         if let Some(bench) = &mut self.bench {
-            if let Some(report) = bench.frame(frame.info().cpu_usage) {
+            if let Some(report) = bench.frame(cpu_usage) {
                 tracing::info!("{report}");
                 eprintln!("{report}");
                 self.bench = None;
@@ -758,7 +773,7 @@ impl eframe::App for App {
         }
     }
 
-    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+    pub fn shutdown(&mut self) {
         if let Some(s) = &self.scan {
             s.control.cancel();
         }
