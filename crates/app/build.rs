@@ -1,5 +1,5 @@
 //! Records the compiler version for the diagnostics window and, on Windows,
-//! embeds the program icon and version info into the .exe.
+//! embeds the program icon, version info and manifest into the .exe.
 fn main() {
     let rustc = std::env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
     let version = std::process::Command::new(rustc)
@@ -15,9 +15,12 @@ fn main() {
     #[cfg(windows)]
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
         let icon = "../../packaging/windows/ip-scanner-deluxe.ico";
+        let manifest = "../../packaging/windows/ip-scanner-deluxe.manifest";
         println!("cargo:rerun-if-changed={icon}");
+        println!("cargo:rerun-if-changed={manifest}");
         let mut res = winresource::WindowsResource::new();
         res.set_icon(icon)
+            .set_manifest_file(manifest)
             .set("ProductName", "IP Scanner Deluxe")
             .set("FileDescription", "IP Scanner Deluxe")
             .set("CompanyName", "Dominik Schmidt")

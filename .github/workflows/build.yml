@@ -93,26 +93,6 @@ jobs:
           $deps = & $dumpbin.FullName /dependents target/release/IPScannerDeluxe.exe
           $deps
           if ($deps -match 'VCRUNTIME|MSVCP|api-ms-win-crt') { throw "IPScannerDeluxe.exe must not depend on the Visual C++ runtime" }
-      - name: Loader diagnostics
-        if: always()
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          Get-CimInstance Win32_OperatingSystem | Format-List Caption, Version, BuildNumber
-          Get-CimInstance Win32_VideoController | Format-List Name, DriverVersion
-          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $dumpbin = (Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" | Select-Object -First 1).FullName
-          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\start-test" | Out-Null
-          & $dumpbin /imports target/release/IPScannerDeluxe.exe > "$env:RUNNER_TEMP\start-test\imports.txt"
-          gh release download v0.1.3 --repo $env:GITHUB_REPOSITORY --pattern IPScannerDeluxe.exe --dir "$env:RUNNER_TEMP\v013"
-          foreach ($exe in "$env:RUNNER_TEMP\v013\IPScannerDeluxe.exe", "target/release/IPScannerDeluxe.exe") {
-            $p = Start-Process $exe -ArgumentList '--demo', '--screenshot', "$env:RUNNER_TEMP\diag.png" -PassThru
-            if (-not $p.WaitForExit(20000)) { $p.Kill() }
-            Write-Host "===== ${exe}: exit $($p.ExitCode) ====="
-          }
-          Get-WinEvent -FilterHashtable @{ LogName = 'System'; Id = 26 } -MaxEvents 10 -ErrorAction SilentlyContinue | Format-List TimeCreated, Message
-          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Level = 2 } -MaxEvents 10 -ErrorAction SilentlyContinue | Format-List TimeCreated, ProviderName, Message
       # The runner is a VM without a GPU driver (only OpenGL 1.1), like many
       # Windows Server and virtual machines: the window must still open, by
       # default (OpenGL with Direct3D fallback) and with Direct3D forced.
