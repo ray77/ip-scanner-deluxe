@@ -209,4 +209,6 @@ This project is an independent work and is not affiliated with Famatech or Advan
 | Linux: window does not open | OpenGL/Wayland libraries missing (`libgl1`, `libxkbcommon0`). On Wayland, set `WAYLAND_DISPLAY=` to force X11. |
 | Many "unknown" hosts | Devices without open ports or name services. Use the "Accurate" profile. |
 | Windows in a VM finds almost nothing | The VM uses NAT. Switch the VM network to bridged mode so it sees your real LAN. |
+| Windows: slow window or rendering errors | Without a GPU (virtual machines, Windows Server) the program draws on the CPU, with a GPU it uses OpenGL and falls back to Direct3D 12. Force a renderer with the environment variable `IPSD_RENDERER=software`, `wgpu` or `glow`; the log shows which one is used. |
+| Window does not open | Since 0.1.4 a message box shows the error; details are in the log file (`%APPDATA%\IPScannerDeluxe\logs` on Windows). |
 | Debugging | *Help → Diagnostics* shows interfaces, ICMP status, DB version. Verbose log with `IPSD_LOG=debug`. |

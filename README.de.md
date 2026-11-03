@@ -209,4 +209,6 @@ Advanced IP Scanner.
 | Scan unter macOS sehr langsam, keine Treffer | Berechtigung „Lokales Netzwerk“ fehlt oder wurde abgelehnt. |
 | Linux: Fenster startet nicht | OpenGL/Wayland-Bibliotheken fehlen (`libgl1`, `libxkbcommon0`). Unter Wayland ggf. `WAYLAND_DISPLAY=` setzen, um X11 zu erzwingen. |
 | Viele „unbekannt“-Hosts | Geräte ohne offene Ports und ohne Namensdienste. Profil „Genau“ verwenden. |
+| Windows: Fenster träge oder Darstellungsfehler | Ohne Grafikkarte (virtuelle Maschinen, Windows Server) zeichnet das Programm auf der CPU, mit Grafikkarte per OpenGL mit Direct3D 12 als Ausweichlösung. Erzwingen mit der Umgebungsvariable `IPSD_RENDERER=software`, `wgpu` oder `glow`; das Log zeigt, welcher Renderer läuft. |
+| Fenster öffnet sich nicht | Seit 0.1.4 erscheint eine Fehlermeldung; Details im Log (`%APPDATA%\IPScannerDeluxe\logs` unter Windows). |
 | Fehlersuche | *Hilfe → Diagnose* zeigt Interfaces, ICMP-Status, DB-Version. Ausführliches Log mit `IPSD_LOG=debug`. |
