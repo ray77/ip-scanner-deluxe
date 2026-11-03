@@ -48,7 +48,7 @@ cargo run -p ip-scanner-deluxe -- --english --demo --expand --theme dark --scree
 - **Favorites, custom names, comments**, scan history (new/gone/changed).
 - **Filter and search**, sortable, movable and hideable columns.
 - **Export**: CSV (semicolon, optional BOM), JSON, HTML, XML; import of lists.
-- **Light/dark theme**, German/English, portable mode, diagnostics window, rotating log.
+- **Light/dark theme**, German/English/Spanish/Italian, portable mode, diagnostics window, rotating log.
 
 ## Platforms
 

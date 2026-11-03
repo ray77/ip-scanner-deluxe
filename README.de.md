@@ -48,7 +48,7 @@ cargo run -p ip-scanner-deluxe -- --english --demo --expand --theme dark --scree
 - **Favoriten, eigene Namen, Kommentare**, Scan-Verlauf (neu/verschwunden/geändert).
 - **Filter und Suche**, sortier-, verschieb- und ausblendbare Spalten.
 - **Export**: CSV (Semikolon, optional mit BOM), JSON, HTML, XML; Import von Listen.
-- **Hell-/Dunkelmodus**, Deutsch/Englisch, portabler Modus, Diagnosefenster, Log mit Rotation.
+- **Hell-/Dunkelmodus**, Deutsch/Englisch/Spanisch/Italienisch, portabler Modus, Diagnosefenster, Log mit Rotation.
 
 ## Plattformen
 

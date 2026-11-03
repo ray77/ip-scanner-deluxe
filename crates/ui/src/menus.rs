@@ -113,7 +113,13 @@ pub fn menu_bar(ui: &mut Ui, st: &MenuState, out: &mut Vec<UiCommand>) {
                 out.push(UiCommand::OpenFingerprints);
             }
             ui.menu_button(t("settings.language"), |ui| {
-                for (l, k) in [(Language::System, "lang.system"), (Language::German, "lang.de"), (Language::English, "lang.en")] {
+                for (l, k) in [
+                    (Language::System, "lang.system"),
+                    (Language::German, "lang.de"),
+                    (Language::English, "lang.en"),
+                    (Language::Spanish, "lang.es"),
+                    (Language::Italian, "lang.it"),
+                ] {
                     if ui.radio(st.language == l, t(k)).clicked() {
                         out.push(UiCommand::SetLanguage(l));
                     }

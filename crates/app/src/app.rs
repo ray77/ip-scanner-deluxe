@@ -149,8 +149,8 @@ impl App {
             settings.last_range = "192.168.0.90-110".into();
             settings.language = storage::Language::German;
         }
-        if cli.lang_en {
-            settings.language = storage::Language::English;
+        if let Some(lang) = cli.lang {
+            settings.language = lang;
         }
         ui::set_language(settings.language);
         // 2. Theme + fonts

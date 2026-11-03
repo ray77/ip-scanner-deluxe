@@ -18,6 +18,8 @@ pub enum Language {
     System,
     German,
     English,
+    Spanish,
+    Italian,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]

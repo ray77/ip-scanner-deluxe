@@ -12,7 +12,8 @@ pub struct CliOptions {
     pub dark: Option<bool>,
     pub screenshot: Option<PathBuf>,
     pub size: Option<[f32; 2]>,
-    pub lang_en: bool,
+    /// `--english` or `--lang de|en|es|it`: overrides the saved language.
+    pub lang: Option<storage::Language>,
     pub dialog: Option<String>,
     /// `--bench`: repaint continuously, log frame times and exit (renderer diagnostics).
     pub bench: bool,
@@ -25,7 +26,16 @@ pub fn parse_args() -> CliOptions {
         match a.as_str() {
             "--demo" => o.demo = true,
             "--expand" => o.expand = true,
-            "--english" => o.lang_en = true,
+            "--english" => o.lang = Some(storage::Language::English),
+            "--lang" => {
+                o.lang = args.next().and_then(|l| match l.as_str() {
+                    "de" => Some(storage::Language::German),
+                    "en" => Some(storage::Language::English),
+                    "es" => Some(storage::Language::Spanish),
+                    "it" => Some(storage::Language::Italian),
+                    _ => None,
+                })
+            }
             "--theme" => o.dark = args.next().map(|t| t == "dark"),
             "--screenshot" => o.screenshot = args.next().map(PathBuf::from),
             "--dialog" => o.dialog = args.next(),

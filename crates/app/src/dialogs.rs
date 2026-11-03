@@ -330,6 +330,8 @@ impl App {
                             ui.radio_value(&mut d.language, Language::System, t("lang.system"));
                             ui.radio_value(&mut d.language, Language::German, t("lang.de"));
                             ui.radio_value(&mut d.language, Language::English, t("lang.en"));
+                            ui.radio_value(&mut d.language, Language::Spanish, t("lang.es"));
+                            ui.radio_value(&mut d.language, Language::Italian, t("lang.it"));
                         });
                         ui.end_row();
                         ui.label(t("opt.wol_port"));
