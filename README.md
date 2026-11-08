@@ -14,6 +14,8 @@ recognises routers, printers, NAS, PCs and smart-home devices, and opens HTTP, R
 shares straight from the list. Look and feel closely follow classic Windows IP scanners:
 Scan button, IP range, Results/Favorites tabs, tree view with services, status bar with counters.
 
+**[Get IP Scanner Deluxe from the Microsoft Store](https://apps.microsoft.com/detail/9ns53ffrbjhw?ocid=webpdpshare)**
+
 **Download:** ready-to-run builds for Windows, Linux and macOS are on the
 [Releases](https://github.com/ray77/ip-scanner-deluxe/releases) page, and as build artifacts under
 [Actions](https://github.com/ray77/ip-scanner-deluxe/actions).

@@ -14,6 +14,8 @@ erkennt Router, Drucker, NAS, PCs und Smart-Home-Geräte und öffnet HTTP, RDP, 
 direkt aus der Liste. Bedienung und Layout orientieren sich eng an klassischen Windows-IP-Scannern:
 Scan-Button, IP-Bereich, Ergebnisse/Favoriten-Tabs, Baumansicht mit Diensten, Statusleiste mit Zählern.
 
+**[IP Scanner Deluxe aus dem Microsoft Store holen](https://apps.microsoft.com/detail/9ns53ffrbjhw?ocid=webpdpshare)**
+
 **Download:** fertige Programme für Windows, Linux und macOS unter
 [Releases](https://github.com/ray77/ip-scanner-deluxe/releases) bzw. als Build-Artefakte unter
 [Actions](https://github.com/ray77/ip-scanner-deluxe/actions).
