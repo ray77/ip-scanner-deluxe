@@ -75,6 +75,9 @@ fn main() -> eframe::Result<()> {
         std::env::consts::ARCH,
         if STORE_BUILD { ", Store build" } else { "" }
     );
+    if let Some(limit) = platform::limits::raise_open_file_limit() {
+        tracing::info!("open file limit: {limit}");
+    }
 
     let rt = match tokio::runtime::Builder::new_multi_thread().enable_all().thread_name("scan-worker").max_blocking_threads(512).build() {
         Ok(rt) => rt,

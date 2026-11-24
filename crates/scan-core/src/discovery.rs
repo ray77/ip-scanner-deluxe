@@ -118,11 +118,20 @@ impl NetProbe for SystemProbe {
     }
 
     async fn tcp(&self, ip: IpAddr, port: u16, timeout: Duration) -> TcpOutcome {
-        let start = Instant::now();
-        match tokio::time::timeout(timeout, tokio::net::TcpStream::connect(SocketAddr::new(ip, port))).await {
-            Ok(Ok(_s)) => TcpOutcome::Open(elapsed_since(start)),
-            Ok(Err(e)) if e.kind() == ErrorKind::ConnectionRefused => TcpOutcome::Refused(elapsed_since(start)),
-            _ => TcpOutcome::NoResponse,
+        let mut tries = 0;
+        loop {
+            let start = Instant::now();
+            // The stream is dropped right away: an open port is only counted, the connection closed.
+            match tokio::time::timeout(timeout, tokio::net::TcpStream::connect(SocketAddr::new(ip, port))).await {
+                Ok(Ok(_s)) => return TcpOutcome::Open(elapsed_since(start)),
+                Ok(Err(e)) if e.kind() == ErrorKind::ConnectionRefused => return TcpOutcome::Refused(elapsed_since(start)),
+                // No free socket right now: retry instead of counting the port as silent.
+                Ok(Err(e)) if platform::limits::is_exhausted(&e) && tries < 40 => {
+                    tries += 1;
+                    tokio::time::sleep(Duration::from_millis(25)).await;
+                }
+                _ => return TcpOutcome::NoResponse,
+            }
         }
     }
 

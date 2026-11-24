@@ -193,12 +193,26 @@ mod unix {
 
     fn open(v6: bool) -> Result<(Socket, bool), IcmpError> {
         let (domain, proto) = if v6 { (Domain::IPV6, Protocol::ICMPV6) } else { (Domain::IPV4, Protocol::ICMPV4) };
-        match Socket::new(domain, Type::DGRAM, Some(proto)) {
-            Ok(s) => Ok((s, false)),
-            Err(e1) => match Socket::new(domain, Type::RAW, Some(proto)) {
-                Ok(s) => Ok((s, true)),
-                Err(_) => Err(IcmpError::NotPermitted(e1.to_string())),
-            },
+        let mut tries = 0;
+        loop {
+            match Socket::new(domain, Type::DGRAM, Some(proto)) {
+                Ok(s) => return Ok((s, false)),
+                // Out of file handles for the moment: wait for other probes to close theirs.
+                // Not a permission problem, and still exhausted after ~1 s is a plain I/O error.
+                Err(e) if crate::limits::is_exhausted(&e) => {
+                    if tries == 40 {
+                        return Err(IcmpError::Io(e));
+                    }
+                    tries += 1;
+                    std::thread::sleep(Duration::from_millis(25));
+                }
+                Err(e1) => {
+                    return match Socket::new(domain, Type::RAW, Some(proto)) {
+                        Ok(s) => Ok((s, true)),
+                        Err(_) => Err(IcmpError::NotPermitted(e1.to_string())),
+                    }
+                }
+            }
         }
     }
 

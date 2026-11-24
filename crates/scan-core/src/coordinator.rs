@@ -205,6 +205,7 @@ impl<P: NetProbe> Scanner<P> {
     /// Run a scan to completion (or cancellation).
     pub async fn run(&self, spec: TargetSpec, cfg: ScanConfig, tx: mpsc::UnboundedSender<ScanEvent>, notify: Notify, control: ScanControl) {
         let total = spec.len();
+        let cfg = fit_to_file_limit(cfg, platform::limits::open_file_limit());
         let ctx = Arc::new(Ctx {
             probe: self.probe.clone(),
             port_sem: Arc::new(Semaphore::new(cfg.max_port_concurrency.max(1))),
@@ -815,4 +816,42 @@ fn apply_fingerprint<P: NetProbe>(
     rec.os = m.os;
     rec.fingerprint_confidence = m.confidence;
     rec.fingerprint_rule = m.rule_id;
+}
+
+/// Keep the sockets of one scan below the open-file limit, where the OS has one (macOS gives
+/// apps 256 unless raised). Besides its port probes each running host holds about two sockets.
+fn fit_to_file_limit(mut cfg: ScanConfig, limit: Option<u64>) -> ScanConfig {
+    if let Some(limit) = limit {
+        // Room for the program's own files: database, log, fonts, mDNS.
+        let budget = usize::try_from(limit.saturating_sub(64)).unwrap_or(usize::MAX).max(16);
+        let (hosts, ports) = (cfg.max_host_concurrency.min(budget / 4), cfg.max_port_concurrency.min(budget / 2));
+        if (hosts, ports) != (cfg.max_host_concurrency, cfg.max_port_concurrency) {
+            tracing::info!("open file limit {limit}: scanning {hosts} hosts and {ports} ports at a time");
+        }
+        cfg.max_host_concurrency = hosts;
+        cfg.max_port_concurrency = ports;
+    }
+    cfg
+}
+
+#[cfg(test)]
+mod limit_tests {
+    use super::*;
+
+    #[test]
+    fn small_limit_reduces_concurrency() {
+        let cfg = fit_to_file_limit(ScanConfig::default(), Some(256));
+        assert_eq!((cfg.max_host_concurrency, cfg.max_port_concurrency), (48, 96));
+        // Worst case: two sockets per host plus all port probes stay under the limit.
+        assert!(cfg.max_host_concurrency * 2 + cfg.max_port_concurrency + 64 <= 256);
+    }
+
+    #[test]
+    fn large_or_no_limit_keeps_settings() {
+        let d = ScanConfig::default();
+        for limit in [Some(10240), None] {
+            let cfg = fit_to_file_limit(d.clone(), limit);
+            assert_eq!((cfg.max_host_concurrency, cfg.max_port_concurrency), (d.max_host_concurrency, d.max_port_concurrency));
+        }
+    }
 }
