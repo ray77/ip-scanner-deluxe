@@ -115,10 +115,12 @@ macOS-App lokal bauen (frisches Bundle unter `dist/IP Scanner Deluxe.app` plus Z
 cargo xtask bundle-macos
 ```
 
-Installationspakete (ZIP, `.deb`, `.app`, `.dmg`) baut die GitHub-Actions-CI
-(`.github/workflows/build.yml`); bei einem Tag `v*` werden sie als Release veröffentlicht.
-Die Paketierungsdateien liegen in `packaging/`. Jedes Release enthält `SHA256SUMS.txt` und
-GitHub-Herkunftsnachweise (`gh attestation verify <datei> --repo ray77/ip-scanner-deluxe`).
+Die Windows- und Linux-Pakete (ZIP, `.exe`, `.deb`) baut die GitHub-Actions-CI
+(`.github/workflows/build.yml`); bei einem Tag `v*` werden sie als Release veröffentlicht. Die
+macOS-App (`.app`/`.dmg`) wird lokal mit `cargo xtask bundle-macos` gebaut und ans Release
+angehängt. Die Paketierungsdateien liegen in `packaging/`. Jedes Release enthält
+`SHA256SUMS.txt`; die Windows- und Linux-Dateien haben zusätzlich GitHub-Herkunftsnachweise
+(`gh attestation verify <datei> --repo ray77/ip-scanner-deluxe`).
 
 **Microsoft Store**: Die Store-Version ist dasselbe Programm, gebaut mit `--features store` und
 als MSIX paketiert; siehe [docs/MICROSOFT_STORE.md](docs/MICROSOFT_STORE.md) (englisch).
