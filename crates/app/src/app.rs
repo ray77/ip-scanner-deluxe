@@ -230,6 +230,14 @@ impl App {
         if !platform::icmp::capability().is_available() {
             app.warnings.push(t("diag.icmp_fallback").into());
         }
+        match platform::neighbor::neighbor_table() {
+            Ok(table) => tracing::info!("neighbor table: {} entries", table.len()),
+            Err(e) => tracing::warn!("neighbor table not readable: {e}"),
+        }
+        if platform::interfaces::mac_addresses_hidden() {
+            tracing::warn!("the operating system hides MAC addresses from this program");
+            app.warnings.push(t("warn.mac_hidden").into());
+        }
         app
     }
 
@@ -347,7 +355,9 @@ impl App {
                 self.results_table.expanded.clear();
             }
         }
-        self.warnings.retain(|w| w.starts_with("ICMP"));
+        // Startup warnings stay; scan warnings are per scan.
+        let startup = [t("diag.icmp_fallback"), t("warn.mac_hidden")];
+        self.warnings.retain(|w| startup.contains(&w.as_str()));
         let mut cfg = self.settings.scan.clone();
         cfg.ports = match cfg.profile {
             scan_core::ScanProfile::Fast => scan_core::ports::fast_ports(),

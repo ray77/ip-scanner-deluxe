@@ -12,6 +12,8 @@ pub struct MacParseError(pub String);
 
 impl MacAddr {
     pub const BROADCAST: MacAddr = MacAddr([0xff; 6]);
+    /// Placeholder macOS returns instead of the real address when it hides MAC addresses from the app.
+    pub const HIDDEN: MacAddr = MacAddr([0x02, 0, 0, 0, 0, 0]);
 
     pub const fn new(bytes: [u8; 6]) -> Self {
         MacAddr(bytes)
@@ -54,9 +56,13 @@ impl MacAddr {
         self.0 == [0; 6]
     }
 
+    pub fn is_hidden(&self) -> bool {
+        *self == Self::HIDDEN
+    }
+
     /// True for addresses that are meaningless as a device identifier.
     pub fn is_unusable(&self) -> bool {
-        self.is_zero() || *self == Self::BROADCAST || self.is_multicast()
+        self.is_zero() || *self == Self::BROADCAST || self.is_multicast() || self.is_hidden()
     }
 
     /// Parse a MAC address in any common notation:

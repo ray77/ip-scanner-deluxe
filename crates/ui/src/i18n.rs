@@ -309,6 +309,11 @@ const STRINGS: &[(&str, &str, &str)] = &[
     ("ports.invalid_range", "Ungültiger Portbereich: {t}", "Invalid port range: {t}"),
     ("ports.zero", "Port 0 ist ungültig", "Port 0 is invalid"),
     ("warn.mdns", "mDNS nicht verfügbar: {e}", "mDNS not available: {e}"),
+    (
+        "warn.mac_hidden",
+        "macOS gibt diesem Programm keine MAC-Adressen heraus, deshalb fehlen MAC-Adresse und Hersteller. Starte IP Scanner Deluxe als App und erlaube den Zugriff unter Systemeinstellungen > Datenschutz & Sicherheit > Lokales Netzwerk.",
+        "macOS does not give MAC addresses to this program, so MAC address and manufacturer are missing. Start IP Scanner Deluxe as an app and allow access in System Settings > Privacy & Security > Local Network.",
+    ),
     ("err.export", "Export fehlgeschlagen: {e}", "Export failed: {e}"),
     ("err.load", "Laden fehlgeschlagen: {e}", "Loading failed: {e}"),
     ("msg.exported", "Gespeichert: {p}", "Saved: {p}"),
@@ -604,6 +609,10 @@ const ES: &[(&str, &str)] = &[
     ("ports.invalid_range", "Rango de puertos no válido: {t}"),
     ("ports.zero", "El puerto 0 no es válido"),
     ("warn.mdns", "mDNS no disponible: {e}"),
+    (
+        "warn.mac_hidden",
+        "macOS no entrega direcciones MAC a este programa, por eso faltan la dirección MAC y el fabricante. Inicia IP Scanner Deluxe como app y permite el acceso en Ajustes del Sistema > Privacidad y seguridad > Red local.",
+    ),
     ("err.export", "Error al exportar: {e}"),
     ("err.load", "Error al cargar: {e}"),
     ("msg.exported", "Guardado: {p}"),
@@ -899,6 +908,10 @@ const IT: &[(&str, &str)] = &[
     ("ports.invalid_range", "Intervallo di porte non valido: {t}"),
     ("ports.zero", "La porta 0 non è valida"),
     ("warn.mdns", "mDNS non disponibile: {e}"),
+    (
+        "warn.mac_hidden",
+        "macOS non fornisce indirizzi MAC a questo programma, quindi mancano indirizzo MAC e produttore. Avvia IP Scanner Deluxe come app e consenti l'accesso in Impostazioni di Sistema > Privacy e sicurezza > Rete locale.",
+    ),
     ("err.export", "Esportazione non riuscita: {e}"),
     ("err.load", "Caricamento non riuscito: {e}"),
     ("msg.exported", "Salvato: {p}"),

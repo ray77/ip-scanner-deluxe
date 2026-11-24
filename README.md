@@ -206,7 +206,7 @@ This project is an independent work and is not affiliated with Famatech or Advan
 | Problem | Cause / fix |
 |---------|-------------|
 | Warning "ICMP not available" | Ping sockets are blocked. Linux: `setcap` (see above). Scanning still works via TCP/ARP, just slower. |
-| No MAC addresses / vendors | MACs are only visible in your own subnet; not behind routers/VPN. macOS: allow local network access. |
+| No MAC addresses / vendors | MACs are only visible in your own subnet; not behind routers/VPN. macOS: allow local network access; macOS only gives MAC addresses to the app bundle, not to a bare binary (`cargo run`). Run a debug build with `cargo xtask run-macos`. |
 | Scan very slow on macOS, no results | "Local Network" permission is missing or was denied. |
 | Linux: window does not open | OpenGL/Wayland libraries missing (`libgl1`, `libxkbcommon0`). On Wayland, set `WAYLAND_DISPLAY=` to force X11. |
 | Many "unknown" hosts | Devices without open ports or name services. Use the "Accurate" profile. |

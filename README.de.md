@@ -207,7 +207,7 @@ Advanced IP Scanner.
 | Problem | Ursache / Lösung |
 |---------|------------------|
 | Warnung „ICMP Raw Socket nicht verfügbar“ | Ping-Sockets gesperrt. Linux: `setcap` (siehe oben). Der Scan funktioniert trotzdem per TCP/ARP, ist aber langsamer. |
-| Keine MAC-Adressen / Hersteller | MACs gibt es nur im eigenen Subnetz; hinter Routern/VPN nicht ermittelbar. macOS: Zugriff auf lokales Netzwerk erlauben. |
+| Keine MAC-Adressen / Hersteller | MACs gibt es nur im eigenen Subnetz; hinter Routern/VPN nicht ermittelbar. macOS: Zugriff auf lokales Netzwerk erlauben; macOS gibt MAC-Adressen nur an das App-Bundle heraus, nicht an ein nacktes Programm (`cargo run`). Debug-Build mit `cargo xtask run-macos` starten. |
 | Scan unter macOS sehr langsam, keine Treffer | Berechtigung „Lokales Netzwerk“ fehlt oder wurde abgelehnt. |
 | Linux: Fenster startet nicht | OpenGL/Wayland-Bibliotheken fehlen (`libgl1`, `libxkbcommon0`). Unter Wayland ggf. `WAYLAND_DISPLAY=` setzen, um X11 zu erzwingen. |
 | Viele „unbekannt“-Hosts | Geräte ohne offene Ports und ohne Namensdienste. Profil „Genau“ verwenden. |

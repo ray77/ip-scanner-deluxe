@@ -4,6 +4,7 @@
 //! cargo xtask import-oui <file.csv>...   build assets/vendor.redb from IEEE CSVs
 //! cargo xtask build-vendor-db            same, using assets/oui/{oui,mam,oui36}.csv
 //! cargo xtask bundle-macos [target]      release build -> dist/IP Scanner Deluxe.app (+ .zip)
+//! cargo xtask run-macos [args]...        debug build, started as an app bundle (MAC addresses)
 //! cargo xtask third-party-notices        regenerate THIRD-PARTY-NOTICES.txt (needs cargo-about)
 //! ```
 
@@ -120,6 +121,24 @@ fn bundle_macos(target: Option<&str>) -> Result<()> {
     Ok(())
 }
 
+/// Debug build started as an app bundle. macOS only gives MAC addresses (ARP table, own
+/// interface) to apps it allows on the local network; a bare binary gets placeholders.
+fn run_macos(app_args: &[String]) -> Result<()> {
+    if !cfg!(target_os = "macos") {
+        bail!("run-macos needs macOS");
+    }
+    let root = workspace_root();
+    run(Command::new(env!("CARGO")).current_dir(&root).args(["build", "--locked", "-p", "ip-scanner-deluxe"]))?;
+    let app = root.join("target").join("debug").join("IP Scanner Deluxe.app");
+    let macos = app.join("Contents").join("MacOS");
+    std::fs::create_dir_all(&macos)?;
+    std::fs::copy(root.join("target/debug/IPScannerDeluxe"), macos.join("IPScannerDeluxe"))?;
+    let plist = std::fs::read_to_string(root.join("packaging/macos/Info.plist"))?.replace("@VERSION@", &workspace_version(&root)?);
+    std::fs::write(app.join("Contents").join("Info.plist"), plist)?;
+    run(Command::new("codesign").args(["--force", "--sign", "-"]).arg(&app))?;
+    run(Command::new("open").args(["-W", "-n"]).arg(&app).arg("--args").args(app_args))
+}
+
 /// THIRD-PARTY-NOTICES.txt from Cargo.lock via cargo-about (config: about.toml).
 fn third_party_notices() -> Result<()> {
     let root = workspace_root();
@@ -156,9 +175,12 @@ fn main() -> Result<()> {
             import(&files)
         }
         Some("bundle-macos") => bundle_macos(args.get(1).map(String::as_str)),
+        Some("run-macos") => run_macos(&args[1..]),
         Some("third-party-notices") => third_party_notices(),
         _ => {
-            eprintln!("tasks:\n  import-oui <csv>...\n  build-vendor-db\n  bundle-macos [target]\n  third-party-notices");
+            eprintln!(
+                "tasks:\n  import-oui <csv>...\n  build-vendor-db\n  bundle-macos [target]\n  run-macos [args]...\n  third-party-notices"
+            );
             Ok(())
         }
     }

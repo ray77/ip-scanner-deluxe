@@ -160,7 +160,13 @@ fn kind_of(i: &netdev::Interface, tag: &Option<String>) -> InterfaceKind {
 
 fn convert_mac(m: &netdev::MacAddr) -> Option<MacAddr> {
     let mac = MacAddr(m.octets());
-    (!mac.is_zero()).then_some(mac)
+    (!mac.is_zero() && !mac.is_hidden()).then_some(mac)
+}
+
+/// macOS hides MAC addresses from apps it does not allow on the local network: every interface
+/// reports the placeholder 02:00:00:00:00:00 and the ARP table has no IPv4 entries.
+pub fn mac_addresses_hidden() -> bool {
+    netdev::get_interfaces().iter().filter_map(|i| i.mac_addr.as_ref()).any(|m| MacAddr(m.octets()).is_hidden())
 }
 
 /// Enumerate interfaces. Loopback is included but flagged.
