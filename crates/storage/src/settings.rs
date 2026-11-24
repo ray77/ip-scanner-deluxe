@@ -162,7 +162,7 @@ impl Default for AppSettings {
             last_range: String::new(),
             range_history: Vec::new(),
             last_interface: None,
-            alternating_rows: false,
+            alternating_rows: true,
             show_alive_only: false,
             show_offline: true,
             show_unknown: false,
