@@ -30,115 +30,142 @@ fn check(ui: &mut Ui, label: &str, mut value: bool) -> bool {
 
 pub fn menu_bar(ui: &mut Ui, st: &MenuState, out: &mut Vec<UiCommand>) {
     egui::MenuBar::new().ui(ui, |ui| {
-        ui.menu_button(t("menu.file"), |ui| {
-            ui.set_min_width(200.0);
-            if item(ui, t("file.new"), "Ctrl+N") {
-                out.push(UiCommand::NewSearch);
-            }
-            if item(ui, t("file.load"), "Ctrl+O") {
-                out.push(UiCommand::LoadList);
-            }
-            ui.menu_button(t("file.save_as"), |ui| {
-                for (f, l) in
-                    [(ExportFormat::Csv, "CSV"), (ExportFormat::Html, "HTML"), (ExportFormat::Json, "JSON"), (ExportFormat::Xml, "XML")]
-                {
-                    if item(ui, l, if f == ExportFormat::Csv { "Ctrl+S" } else { "" }) {
-                        out.push(UiCommand::SaveAs(f));
+        let mut tops = Vec::new();
+        tops.push(
+            ui.menu_button(t("menu.file"), |ui| {
+                ui.set_min_width(200.0);
+                if item(ui, t("file.new"), "Ctrl+N") {
+                    out.push(UiCommand::NewSearch);
+                }
+                if item(ui, t("file.load"), "Ctrl+O") {
+                    out.push(UiCommand::LoadList);
+                }
+                ui.menu_button(t("file.save_as"), |ui| {
+                    for (f, l) in
+                        [(ExportFormat::Csv, "CSV"), (ExportFormat::Html, "HTML"), (ExportFormat::Json, "JSON"), (ExportFormat::Xml, "XML")]
+                    {
+                        if item(ui, l, if f == ExportFormat::Csv { "Ctrl+S" } else { "" }) {
+                            out.push(UiCommand::SaveAs(f));
+                        }
                     }
+                });
+                ui.separator();
+                if item(ui, t("file.favorites_import"), "") {
+                    out.push(UiCommand::ImportFavorites);
                 }
-            });
-            ui.separator();
-            if item(ui, t("file.favorites_import"), "") {
-                out.push(UiCommand::ImportFavorites);
-            }
-            if item(ui, t("file.favorites_export"), "") {
-                out.push(UiCommand::ExportFavorites);
-            }
-            ui.separator();
-            if item(ui, t("file.quit"), "Alt+F4") {
-                out.push(UiCommand::Quit);
-            }
-        });
-        ui.menu_button(t("menu.view"), |ui| {
-            ui.set_min_width(220.0);
-            if item(ui, t("view.expand_all"), "") {
-                out.push(UiCommand::ExpandAll);
-            }
-            if item(ui, t("view.collapse_all"), "") {
-                out.push(UiCommand::CollapseAll);
-            }
-            ui.separator();
-            if check(ui, t("view.alive_only"), st.alive_only) {
-                out.push(UiCommand::ToggleAliveOnly);
-            }
-            if check(ui, t("view.show_offline"), st.show_offline) {
-                out.push(UiCommand::ToggleShowOffline);
-            }
-            if check(ui, t("view.show_unknown"), st.show_unknown) {
-                out.push(UiCommand::ToggleShowUnknown);
-            }
-            ui.separator();
-            ui.menu_button(t("view.toolbar"), |ui| {
-                if check(ui, t("view.toolbar_ipc"), st.toolbar_ip_c) {
-                    out.push(UiCommand::ToggleToolbarIpC);
+                if item(ui, t("file.favorites_export"), "") {
+                    out.push(UiCommand::ExportFavorites);
                 }
-                if check(ui, t("view.toolbar_expand"), st.toolbar_expand) {
-                    out.push(UiCommand::ToggleToolbarExpand);
+                ui.separator();
+                if item(ui, t("file.quit"), "Alt+F4") {
+                    out.push(UiCommand::Quit);
                 }
-            });
-            ui.menu_button(t("view.columns"), |ui| column_chooser(ui, &st.columns, out));
-            ui.separator();
-            if check(ui, t("view.dark"), st.theme == AppTheme::Dark) {
-                out.push(UiCommand::SetTheme(if st.theme == AppTheme::Dark { AppTheme::Light } else { AppTheme::Dark }));
-            }
-            if check(ui, t("view.theme_system"), st.theme == AppTheme::System) {
-                out.push(UiCommand::SetTheme(if st.theme == AppTheme::System { AppTheme::Light } else { AppTheme::System }));
-            }
-            if check(ui, t("view.alternating"), st.alternating) {
-                out.push(UiCommand::ToggleAlternating);
-            }
-        });
-        ui.menu_button(t("menu.settings"), |ui| {
-            ui.set_min_width(180.0);
-            if item(ui, t("settings.options"), "") {
-                out.push(UiCommand::OpenOptions);
-            }
-            if item(ui, t("settings.macdb"), "") {
-                out.push(UiCommand::OpenMacDb);
-            }
-            if item(ui, t("settings.profiles"), "") {
-                out.push(UiCommand::OpenProfiles);
-            }
-            if item(ui, t("settings.fingerprints"), "") {
-                out.push(UiCommand::OpenFingerprints);
-            }
-            ui.menu_button(t("settings.language"), |ui| {
-                for (l, k) in [
-                    (Language::System, "lang.system"),
-                    (Language::German, "lang.de"),
-                    (Language::English, "lang.en"),
-                    (Language::Spanish, "lang.es"),
-                    (Language::Italian, "lang.it"),
-                ] {
-                    if ui.radio(st.language == l, t(k)).clicked() {
-                        out.push(UiCommand::SetLanguage(l));
+            })
+            .response,
+        );
+        tops.push(
+            ui.menu_button(t("menu.view"), |ui| {
+                ui.set_min_width(220.0);
+                if item(ui, t("view.expand_all"), "") {
+                    out.push(UiCommand::ExpandAll);
+                }
+                if item(ui, t("view.collapse_all"), "") {
+                    out.push(UiCommand::CollapseAll);
+                }
+                ui.separator();
+                if check(ui, t("view.alive_only"), st.alive_only) {
+                    out.push(UiCommand::ToggleAliveOnly);
+                }
+                if check(ui, t("view.show_offline"), st.show_offline) {
+                    out.push(UiCommand::ToggleShowOffline);
+                }
+                if check(ui, t("view.show_unknown"), st.show_unknown) {
+                    out.push(UiCommand::ToggleShowUnknown);
+                }
+                ui.separator();
+                ui.menu_button(t("view.toolbar"), |ui| {
+                    if check(ui, t("view.toolbar_ipc"), st.toolbar_ip_c) {
+                        out.push(UiCommand::ToggleToolbarIpC);
                     }
+                    if check(ui, t("view.toolbar_expand"), st.toolbar_expand) {
+                        out.push(UiCommand::ToggleToolbarExpand);
+                    }
+                });
+                ui.menu_button(t("view.columns"), |ui| column_chooser(ui, &st.columns, out));
+                ui.separator();
+                if check(ui, t("view.dark"), st.theme == AppTheme::Dark) {
+                    out.push(UiCommand::SetTheme(if st.theme == AppTheme::Dark { AppTheme::Light } else { AppTheme::Dark }));
                 }
-            });
-        });
-        ui.menu_button(t("menu.help"), |ui| {
-            ui.set_min_width(200.0);
-            if item(ui, t("help.about"), "") {
-                out.push(UiCommand::About);
-            }
-            if item(ui, t("help.diagnose"), "") {
-                out.push(UiCommand::Diagnose);
-            }
-            if item(ui, t("help.log"), "") {
-                out.push(UiCommand::OpenLog);
-            }
-        });
+                if check(ui, t("view.theme_system"), st.theme == AppTheme::System) {
+                    out.push(UiCommand::SetTheme(if st.theme == AppTheme::System { AppTheme::Light } else { AppTheme::System }));
+                }
+                if check(ui, t("view.alternating"), st.alternating) {
+                    out.push(UiCommand::ToggleAlternating);
+                }
+            })
+            .response,
+        );
+        tops.push(
+            ui.menu_button(t("menu.settings"), |ui| {
+                ui.set_min_width(180.0);
+                if item(ui, t("settings.options"), "") {
+                    out.push(UiCommand::OpenOptions);
+                }
+                if item(ui, t("settings.macdb"), "") {
+                    out.push(UiCommand::OpenMacDb);
+                }
+                if item(ui, t("settings.profiles"), "") {
+                    out.push(UiCommand::OpenProfiles);
+                }
+                if item(ui, t("settings.fingerprints"), "") {
+                    out.push(UiCommand::OpenFingerprints);
+                }
+                ui.menu_button(t("settings.language"), |ui| {
+                    for (l, k) in [
+                        (Language::System, "lang.system"),
+                        (Language::German, "lang.de"),
+                        (Language::English, "lang.en"),
+                        (Language::Spanish, "lang.es"),
+                        (Language::Italian, "lang.it"),
+                    ] {
+                        if ui.radio(st.language == l, t(k)).clicked() {
+                            out.push(UiCommand::SetLanguage(l));
+                        }
+                    }
+                });
+            })
+            .response,
+        );
+        tops.push(
+            ui.menu_button(t("menu.help"), |ui| {
+                ui.set_min_width(200.0);
+                if item(ui, t("help.about"), "") {
+                    out.push(UiCommand::About);
+                }
+                if item(ui, t("help.diagnose"), "") {
+                    out.push(UiCommand::Diagnose);
+                }
+                if item(ui, t("help.log"), "") {
+                    out.push(UiCommand::OpenLog);
+                }
+            })
+            .response,
+        );
+        switch_menu_on_hover(ui, &tops);
     });
+}
+
+/// Classic menu bar: while one menu is open, hovering another menu title opens that one instead.
+fn switch_menu_on_hover(ui: &Ui, tops: &[egui::Response]) {
+    let ids: Vec<egui::Id> = tops.iter().map(egui::Popup::default_response_id).collect();
+    let open = ids.iter().position(|id| egui::Popup::is_id_open(ui.ctx(), *id));
+    let hovered = tops.iter().position(egui::Response::hovered);
+    if let (Some(open), Some(hovered)) = (open, hovered) {
+        if open != hovered {
+            egui::Popup::open_id(ui.ctx(), ids[hovered]);
+            ui.ctx().request_repaint();
+        }
+    }
 }
 
 pub fn column_chooser(ui: &mut Ui, visible: &[Column], out: &mut Vec<UiCommand>) {
@@ -272,5 +299,64 @@ pub fn host_context_menu(ui: &mut Ui, row: &HostRow, caps: &ContextCaps, out: &m
     if ui.button(t("ctx.properties")).clicked() {
         out.push(UiCommand::Properties(ip));
         ui.close();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::switch_menu_on_hover;
+    use egui::{Event, PointerButton, Pos2, RawInput, Rect};
+
+    /// Draws a bar with menus "A" and "B" and returns their title rects and popup ids.
+    fn frame(ctx: &egui::Context, events: Vec<Event>) -> Vec<(Rect, egui::Id)> {
+        let input = RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, egui::vec2(400.0, 300.0))), events, ..Default::default() };
+        let mut tops = Vec::new();
+        let _ = ctx.run(input, |ctx| {
+            egui::TopBottomPanel::top("bar").show(ctx, |ui| {
+                egui::MenuBar::new().ui(ui, |ui| {
+                    let mut responses = Vec::new();
+                    for name in ["A", "B"] {
+                        responses.push(
+                            ui.menu_button(name, |ui| {
+                                let _ = ui.button("item");
+                            })
+                            .response,
+                        );
+                    }
+                    switch_menu_on_hover(ui, &responses);
+                    tops = responses.iter().map(|r| (r.rect, egui::Popup::default_response_id(r))).collect();
+                });
+            });
+        });
+        tops
+    }
+
+    fn click(pos: Pos2) -> Vec<Event> {
+        let button = |pressed| Event::PointerButton { pos, button: PointerButton::Primary, pressed, modifiers: Default::default() };
+        vec![Event::PointerMoved(pos), button(true), button(false)]
+    }
+
+    #[test]
+    fn hovering_other_title_switches_open_menu() {
+        let ctx = egui::Context::default();
+        let tops = frame(&ctx, Vec::new());
+        let (a, b) = (tops[0], tops[1]);
+        frame(&ctx, click(a.0.center()));
+        frame(&ctx, Vec::new());
+        assert!(egui::Popup::is_id_open(&ctx, a.1), "click opens A");
+
+        frame(&ctx, vec![Event::PointerMoved(b.0.center())]);
+        frame(&ctx, Vec::new());
+        assert!(egui::Popup::is_id_open(&ctx, b.1), "hover switches to B");
+        assert!(!egui::Popup::is_id_open(&ctx, a.1));
+    }
+
+    #[test]
+    fn hovering_titles_without_open_menu_opens_nothing() {
+        let ctx = egui::Context::default();
+        let tops = frame(&ctx, Vec::new());
+        frame(&ctx, vec![Event::PointerMoved(tops[1].0.center())]);
+        frame(&ctx, Vec::new());
+        assert!(!egui::Popup::is_any_open(&ctx));
     }
 }
