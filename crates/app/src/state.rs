@@ -369,7 +369,7 @@ fn sort_rows(v: &mut [(&HostRecord, HostRow)], sort: &SortState) {
                 match (a.is_empty(), b.is_empty()) {
                     (true, false) => std::cmp::Ordering::Greater,
                     (false, true) => std::cmp::Ordering::Less,
-                    _ => a.cmp(&b),
+                    _ => natural_cmp(&a, &b),
                 }
             }
         };
@@ -380,4 +380,55 @@ fn sort_rows(v: &mut [(&HostRecord, HostRow)], sort: &SortState) {
             ord.reverse()
         }
     });
+}
+
+/// Compares text with embedded numbers by their value, so host names that are IP addresses sort
+/// like addresses ("192.168.0.23" before "192.168.0.103") and "pc2" sorts before "pc10".
+fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    let (mut a, mut b) = (a, b);
+    loop {
+        match (a.chars().next(), b.chars().next()) {
+            (None, None) => return Ordering::Equal,
+            (None, Some(_)) => return Ordering::Less,
+            (Some(_), None) => return Ordering::Greater,
+            (Some(ca), Some(cb)) if ca.is_ascii_digit() && cb.is_ascii_digit() => {
+                let (da, ra) = a.split_at(a.find(|c: char| !c.is_ascii_digit()).unwrap_or(a.len()));
+                let (db, rb) = b.split_at(b.find(|c: char| !c.is_ascii_digit()).unwrap_or(b.len()));
+                // Compare digit runs of any length without parsing: fewer significant digits = smaller.
+                let (na, nb) = (da.trim_start_matches('0'), db.trim_start_matches('0'));
+                let ord = na.len().cmp(&nb.len()).then_with(|| na.cmp(nb)).then_with(|| da.len().cmp(&db.len()));
+                if ord != Ordering::Equal {
+                    return ord;
+                }
+                (a, b) = (ra, rb);
+            }
+            (Some(ca), Some(cb)) => {
+                if ca != cb {
+                    return ca.cmp(&cb);
+                }
+                (a, b) = (&a[ca.len_utf8()..], &b[cb.len_utf8()..]);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::natural_cmp;
+
+    #[test]
+    fn natural_order() {
+        let mut v = vec!["192.168.0.175", "pc10", "192.168.0.23", "amazon-d47", "192.168.0.103", "pc2", "192.168.0.97", "fritz.box"];
+        v.sort_by(|a, b| natural_cmp(a, b));
+        assert_eq!(v, ["192.168.0.23", "192.168.0.97", "192.168.0.103", "192.168.0.175", "amazon-d47", "fritz.box", "pc2", "pc10"]);
+    }
+
+    #[test]
+    fn natural_long_and_leading_zeros() {
+        use std::cmp::Ordering;
+        assert_eq!(natural_cmp("a007", "a7"), Ordering::Greater);
+        assert_eq!(natural_cmp("x99999999999999999999999", "x100000000000000000000000"), Ordering::Less);
+        assert_eq!(natural_cmp("äb2", "äb10"), Ordering::Less);
+    }
 }
