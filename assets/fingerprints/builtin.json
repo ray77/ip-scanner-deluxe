@@ -57,7 +57,7 @@
   {
     "id": "fritzbox",
     "vendor_contains": ["avm audiovisuelles", "avm gmbh"],
-    "hostname_regex": "(?i)fritz\\.box|fritzbox|fritz!box",
+    "hostname_regex": "(?i)^fritz\\.box\\.?$|^fritz-?box|fritz!box",
     "optional_ports": [53, 80, 443, 49000, 49443],
     "http_title_regex": "(?i)fritz!box",
     "model_regex": "(?i)fritz!box",

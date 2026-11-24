@@ -411,6 +411,20 @@ mod tests {
         assert!(m.confidence >= 90, "{m:?}");
     }
 
+    /// "fritz.box" is also the DNS domain of every device behind a FRITZ!Box.
+    #[test]
+    fn fritz_box_domain_is_not_a_router() {
+        for name in ["s24-von-bettina.fritz.box", "android.fritz.box", "keller-synology-nas.fritz.box"] {
+            let mut i = input();
+            i.hostnames = vec![name.into()];
+            let m = engine().identify(&i);
+            assert_ne!(m.device_class, DeviceClass::Router, "{name}: {m:?}");
+        }
+        let mut i = input();
+        i.hostnames = vec!["fritzbox-oben.fritz.box".into()];
+        assert_eq!(engine().identify(&i).device_class, DeviceClass::Router);
+    }
+
     #[test]
     fn synology() {
         let mut i = input();
