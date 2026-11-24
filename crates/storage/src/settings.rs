@@ -126,6 +126,8 @@ pub struct AppSettings {
     /// Visible columns in display order.
     pub columns: Vec<Column>,
     pub column_widths: BTreeMap<Column, f32>,
+    /// Not saved: every start sorts by IP address again.
+    #[serde(skip)]
     pub sort: SortState,
     pub scan: ScanConfig,
     pub custom_ports: String,

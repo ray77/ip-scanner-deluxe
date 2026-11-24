@@ -287,10 +287,17 @@ mod tests {
     #[test]
     fn settings_roundtrip() {
         let s = Store::in_memory().unwrap();
-        let st = crate::AppSettings { last_range: "192.168.0.1-254".into(), theme: crate::AppTheme::Dark, ..Default::default() };
+        let st = crate::AppSettings {
+            last_range: "192.168.0.1-254".into(),
+            theme: crate::AppTheme::Dark,
+            sort: crate::SortState { column: crate::Column::Name, ascending: false, user: true },
+            ..Default::default()
+        };
         s.save_settings(&st).unwrap();
         let back: crate::AppSettings = s.load_settings();
         assert_eq!(back.last_range, "192.168.0.1-254");
         assert_eq!(back.theme, crate::AppTheme::Dark);
+        // The sort order is per session: a new start sorts by IP again.
+        assert_eq!(back.sort, crate::SortState::default());
     }
 }
