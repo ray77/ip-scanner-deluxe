@@ -57,8 +57,8 @@ cargo run -p ip-scanner-deluxe -- --english --demo --expand --theme dark --scree
 | System | Architektur | Artefakt |
 |--------|-------------|----------|
 | Windows 10/11 | x86_64 | `IPScannerDeluxe.exe`, portables ZIP |
-| Linux (glibc ≥ 2.35, X11/Wayland) | x86_64, aarch64 | `tar.gz`, `.deb`, `AppImage` |
-| macOS 11+ | Apple Silicon, Intel | `.app` (ZIP), `.dmg` |
+| Debian/Ubuntu (glibc ≥ 2.35, X11/Wayland) | x86_64 | `.deb` |
+| macOS 11+ | Apple Silicon | `.app` (ZIP), `.dmg` |
 
 ## Build-Anleitung
 
@@ -115,7 +115,7 @@ macOS-App lokal bauen (frisches Bundle unter `dist/IP Scanner Deluxe.app` plus Z
 cargo xtask bundle-macos
 ```
 
-Installationspakete (ZIP, `.deb`, AppImage, `.app`, `.dmg`) baut die GitHub-Actions-CI
+Installationspakete (ZIP, `.deb`, `.app`, `.dmg`) baut die GitHub-Actions-CI
 (`.github/workflows/build.yml`); bei einem Tag `v*` werden sie als Release veröffentlicht.
 Die Paketierungsdateien liegen in `packaging/`. Jedes Release enthält `SHA256SUMS.txt` und
 GitHub-Herkunftsnachweise (`gh attestation verify <datei> --repo ray77/ip-scanner-deluxe`).
