@@ -466,7 +466,17 @@ pub fn ip_button(painter: &Painter, r: Rect, pal: &ThemePalette) {
 pub fn c_button(painter: &Painter, r: Rect, pal: &ThemePalette) {
     let s = sc(r);
     fill(painter, sub(r, 1.5, 1.5, 14.5, 14.5), 2.0 * s, pal.icon_screen);
-    painter.text(p(r, 8.0, 8.2), egui::Align2::CENTER_CENTER, "C", crate::theme::font(10.5 * s), Color32::WHITE);
+    // Drawn as an arc instead of text: a glyph is centered on its text box, not on its ink,
+    // and sat visibly off center.
+    // Center shifted right a little: the opening on the right makes the ink lean left.
+    let (center, radius) = (p(r, 8.4, 8.0), 3.7 * s);
+    let arc: Vec<Pos2> = (0..=24)
+        .map(|i| {
+            let a = std::f32::consts::PI * (0.27 + 1.46 * i as f32 / 24.0);
+            pos2(center.x + radius * a.cos(), center.y + radius * a.sin())
+        })
+        .collect();
+    painter.add(Shape::line(arc, Stroke::new(1.7 * s, Color32::WHITE)));
 }
 
 pub fn expand_all(painter: &Painter, r: Rect, pal: &ThemePalette, expand: bool) {
